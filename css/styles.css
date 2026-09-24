@@ -11,6 +11,24 @@ html {
   scroll-behavior: smooth;
 }
 
+html, body {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+footer {
+  margin-top: auto;
+}
+
 body {
   color: var(--ink);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -119,7 +137,7 @@ body {
 }
 
 .filter-btn.active {
-  color: #fff;
+  color: #f0eaea;
   background: var(--ink);
 }
 
@@ -346,4 +364,99 @@ footer a:not(.navbar-brand) {
   *::after {
     transition: none !important;
   }
+}
+
+/* ===== Mejoras HU-008 / HU-009: catálogo e imágenes de productos ===== */
+.game-image-wrap {
+  background: linear-gradient(135deg, #eae8f2 0%, #f3f1f9 100%);
+}
+
+.game-image {
+  display: block;
+}
+
+.game-card {
+  box-shadow: 0 .2rem .6rem rgba(31, 25, 55, .05);
+}
+
+.game-card .p-4 {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ===== Mejoras HU-017 / HU-018: disponibilidad (fecha y horario) ===== */
+.availability-card .form-label {
+  font-size: .85rem;
+  color: var(--muted);
+}
+
+.cart-context {
+  font-weight: 600;
+  border: 1px dashed rgba(108, 76, 255, .35);
+}
+
+.cart-context i {
+  color: var(--brand);
+  font-size: 1.1rem;
+}
+
+/* ===== Mejoras HU-020 / HU-021: precio por juego y costo total ===== */
+.price {
+  color: var(--ink);
+}
+
+.price::before {
+  content: "";
+}
+
+.game-card .price + small {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.cart-total {
+  background: var(--surface);
+  border-radius: 1rem;
+  padding: 1.1rem 1.2rem;
+}
+
+.cart-total strong#subtotalCarrito {
+  font-size: 1.25rem;
+  color: var(--brand-dark);
+}
+
+/* ===== Mejoras HU-023: agregar al carrito ===== */
+.add-btn {
+  font-weight: 700;
+  transition: transform .15s ease, background-color .15s ease, color .15s ease;
+}
+
+.add-btn:active {
+  transform: scale(.96);
+}
+
+/* ===== Mejoras HU-026 / HU-027 / HU-028: entrega, resumen y confirmación de reserva ===== */
+.offcanvas-header {
+  background: var(--surface);
+}
+
+.cart-item {
+  border-radius: .75rem;
+  padding: .85rem;
+  transition: background-color .15s ease;
+}
+
+.cart-item:hover {
+  background: var(--surface);
+}
+
+#confirmarReserva {
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+#confirmarReserva:disabled {
+  opacity: .55;
 }
