@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Catálogo y agenda de juegos para fiestas y eventos.">
+  <title>Catálogo | JuegaYa</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236c4cff'/%3E%3Cpath d='M18 38c0-10 6-17 14-17s14 7 14 17c0 7-5 9-9 4l-3-4h-4l-3 4c-4 5-9 3-9-4Z' fill='white'/%3E%3Ccircle cx='26' cy='31' r='2' fill='%236c4cff'/%3E%3Cpath d='M39 29v5m-2.5-2.5h5' stroke='%236c4cff' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top border-bottom">
+    <div class="container py-2">
+      <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="catalogo.html#inicio">
+        <span class="brand-mark"><i class="bi bi-controller"></i></span>JuegaYa
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal" aria-controls="menuPrincipal" aria-expanded="false" aria-label="Abrir menú">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="menuPrincipal">
+        <ul class="navbar-nav ms-auto me-lg-3 gap-lg-2">
+          <li class="nav-item"><a class="nav-link" href="iniciar-sesion.html">Iniciar sesión</a></li>
+          <li class="nav-item"><a class="nav-link" href="crear-cuenta.html">Crear cuenta</a></li>
+          <li class="nav-item"><a class="nav-link active" href="catalogo.html#catalogo">Catálogo</a></li>
+          <li class="nav-item"><a class="nav-link" href="catalogo.html#contacto">Contacto</a></li>
+        </ul>
+        <button class="btn btn-dark rounded-pill px-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#carrito" aria-controls="carrito">
+          <i class="bi bi-bag me-1"></i> Mi reserva <span class="badge text-bg-light ms-1" id="contadorCarrito">0</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="inicio">
+    <section class="hero-section">
+      <div class="container py-5">
+        <div class="row align-items-center g-5 py-lg-4">
+          <div class="col-lg-7">
+            <h1 class="display-3 fw-bold mt-3 mb-3">Encuentra, agenda<br>y celebra.</h1>
+            <p class="lead text-secondary mb-4">Revisa juegos disponibles, elige la fecha y arma tu reserva en pocos pasos.</p>
+            <a class="btn btn-primary btn-lg rounded-pill px-4" href="#catalogo">Ver juegos <i class="bi bi-arrow-down-right ms-2"></i></a>
+          </div>
+          <div class="col-lg-5">
+            <div class="availability-card shadow-lg">
+              <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                  <small class="text-secondary">Agenda rápida</small>
+                  <h2 class="h4 mb-0">¿Cuándo es tu evento?</h2>
+                </div>
+                <span class="calendar-icon"><i class="bi bi-calendar2-heart"></i></span>
+              </div>
+              <label for="fechaEvento" class="form-label fw-semibold">Fecha</label>
+              <input type="date" class="form-control form-control-lg mb-3" id="fechaEvento">
+              <label for="comunaEvento" class="form-label fw-semibold">Comuna</label>
+              <select class="form-select form-select-lg mb-4" id="comunaEvento">
+                <option value="">Selecciona una comuna</option>
+                <option>Concepcion</option><option>Talcahuano</option><option>Hualpen</option><option>San Pedro De la Paz</option><option>Chiguayante</option><option>Penco</option>
+              </select>
+              <button class="btn btn-dark w-100 btn-lg" id="buscarDisponibilidad">Buscar disponibilidad</button>
+              <p class="small text-secondary text-center mb-0 mt-3"><i class="bi bi-shield-check me-1"></i> Consulta sin compromiso</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-5" id="catalogo">
+      <div class="container py-lg-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+          <div>
+            <span class="section-kicker">CATÁLOGO</span>
+            <h2 class="display-6 fw-bold mb-1">El favorito de cada fiesta</h2>
+            <p class="text-secondary mb-0">Precios referenciales por una jornada de hasta 6 horas.</p>
+          </div>
+          <div class="filter-pills" role="group" aria-label="Filtrar juegos por categoría">
+            <button class="btn filter-btn active" data-filter="todos">Todos</button>
+            <button class="btn filter-btn" data-filter="inflables">Inflables</button>
+            <button class="btn filter-btn" data-filter="acuaticos">Acuáticos</button>
+            <button class="btn filter-btn" data-filter="interior">Interior</button>
+          </div>
+        </div>
+
+        <div class="row g-4" id="listaJuegos">
+          <div class="col-md-6 col-xl-4 game-item" data-category="inflables">
+            <article class="game-card h-100">
+              <div class="game-image-wrap">
+                <img src="https://inflablesmidas.cl/attachments/Image/plaza-2022.jpg" class="game-image" alt="Castillo inflable colorido para niños">
+                <span class="status-badge"><i class="bi bi-check-circle-fill"></i> Disponible</span>
+                <button class="favorite-btn" aria-label="Agregar Castillo Aventura a favoritos"><i class="bi bi-heart"></i></button>
+              </div>
+              <div class="p-4">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div><span class="game-type">INFLABLE</span><h3 class="h4 mt-1 mb-2">Castillo Aventura</h3></div>
+                  <span class="rating"><i class="bi bi-star-fill"></i> 4,9</span>
+                </div>
+                <p class="text-secondary">Castillo con zona de salto y resbalín. Ideal para cumpleaños.</p>
+                <div class="game-meta"><span><i class="bi bi-people"></i> 7 niños</span><span><i class="bi bi-rulers"></i> 4,5 × 3 m</span></div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div><span class="price">$45.000</span><small class="text-secondary d-block">por jornada</small></div>
+                  <button class="btn btn-outline-dark rounded-pill add-btn" data-id="castillo" data-name="Castillo Aventura" data-price="45000">Agregar</button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="col-md-6 col-xl-4 game-item" data-category="acuaticos inflables">
+            <article class="game-card h-100 featured-card">
+              <div class="game-image-wrap">
+                <img src="https://rentaparty.cl/wp-content/uploads/2025/10/1000589305-1024x1024.jpg" class="game-image" alt="Tobogán inflable acuático con temática de jungla">
+                <span class="status-badge"><i class="bi bi-check-circle-fill"></i> Disponible</span>
+                <button class="favorite-btn" aria-label="Agregar Tobogán Jungla a favoritos"><i class="bi bi-heart"></i></button>
+              </div>
+              <div class="p-4">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div><span class="game-type">ACUÁTICO</span><h3 class="h4 mt-1 mb-2">Tobogán Jungla</h3></div>
+                  <span class="rating"><i class="bi bi-star-fill"></i> 4,8</span>
+                </div>
+                <p class="text-secondary">Tobogán de gran formato con piscina de poca profundidad.</p>
+                <div class="game-meta"><span><i class="bi bi-people"></i> 10 niños</span><span><i class="bi bi-rulers"></i> 5 × 5 m</span></div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div><span class="price">$95.000</span><small class="text-secondary d-block">por jornada</small></div>
+                  <button class="btn btn-outline-dark rounded-pill add-btn" data-id="tobogan" data-name="Tobogán Jungla" data-price="95000">Agregar</button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="col-md-6 col-xl-4 game-item" data-category="interior">
+            <article class="game-card h-100">
+              <div class="game-image-wrap arcade-visual" role="img" aria-label="Máquina arcade de juegos retro">
+                <i class="bi bi-joystick"></i><span>ARCADE</span>
+                <span class="status-badge"><i class="bi bi-check-circle-fill"></i> Disponible</span>
+                <button class="favorite-btn" aria-label="Agregar Arcade Retro a favoritos"><i class="bi bi-heart"></i></button>
+              </div>
+              <div class="p-4">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div><span class="game-type">INTERIOR</span><h3 class="h4 mt-1 mb-2">Arcade Retro</h3></div>
+                  <span class="rating"><i class="bi bi-star-fill"></i> 4,7</span>
+                </div>
+                <p class="text-secondary">Máquina multijuegos para competir y revivir los clásicos.</p>
+                <div class="game-meta"><span><i class="bi bi-people"></i> 2 jugadores</span><span><i class="bi bi-plug"></i> 220 V</span></div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div><span class="price">$55.000</span><small class="text-secondary d-block">por jornada</small></div>
+                  <button class="btn btn-outline-dark rounded-pill add-btn" data-id="arcade" data-name="Arcade Retro" data-price="55000">Agregar</button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="col-md-6 col-xl-4 game-item" data-category="interior">
+            <article class="game-card h-100">
+              <div class="game-image-wrap">
+                <img src="https://colinainflables.imgix.net/producto/img_683a096bee7b25_97896834.jpg?fit=crop&amp;fm=webp&amp;h=600&amp;lossless=true&amp;q=25&amp;w=600" class="game-image" alt="Mesa de taca taca instalada sobre el césped">
+                <span class="status-badge"><i class="bi bi-check-circle-fill"></i> Disponible</span>
+                <button class="favorite-btn" aria-label="Agregar Taca taca a favoritos"><i class="bi bi-heart"></i></button>
+              </div>
+              <div class="p-4">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div><span class="game-type">INTERIOR</span><h3 class="h4 mt-1 mb-2">Taca taca</h3></div>
+                  <span class="rating"><i class="bi bi-star-fill"></i> 4,8</span>
+                </div>
+                <p class="text-secondary">Mesa de fútbol para partidos rápidos entre amigos y familia.</p>
+                <div class="game-meta"><span><i class="bi bi-people"></i> 4 jugadores</span><span><i class="bi bi-lightning"></i> Sin corriente</span></div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div><span class="price">$45.000</span><small class="text-secondary d-block">por jornada</small></div>
+                  <button class="btn btn-outline-dark rounded-pill add-btn" data-id="taca-taca" data-name="Taca taca" data-price="45000">Agregar</button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="col-md-6 col-xl-4 game-item" data-category="interior">
+            <article class="game-card h-100">
+              <div class="game-image-wrap">
+                <img src="https://www.juegosbabymandi.cl/img/air-hockey-grande.jpg" class="game-image" alt="Mesa de air hockey con dos discos rojos">
+                <span class="status-badge"><i class="bi bi-check-circle-fill"></i> Disponible</span>
+                <button class="favorite-btn" aria-label="Agregar Hockey a favoritos"><i class="bi bi-heart"></i></button>
+              </div>
+              <div class="p-4">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div><span class="game-type">INTERIOR</span><h3 class="h4 mt-1 mb-2">Hockey</h3></div>
+                  <span class="rating"><i class="bi bi-star-fill"></i> 4,9</span>
+                </div>
+                <p class="text-secondary">Air hockey de tamaño completo para duelos llenos de velocidad.</p>
+                <div class="game-meta"><span><i class="bi bi-people"></i> 2 jugadores</span><span><i class="bi bi-plug"></i> 220 V</span></div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div><span class="price">$70.000</span><small class="text-secondary d-block">por jornada</small></div>
+                  <button class="btn btn-outline-dark rounded-pill add-btn" data-id="hockey" data-name="Hockey" data-price="70000">Agregar</button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="empty-state d-none" id="sinResultados"><i class="bi bi-search"></i><h3>No hay juegos en esta categoría</h3><p>Prueba con otro filtro.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="py-4" id="contacto"><div class="container d-flex justify-content-between align-items-center gap-3"><a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-white" href="catalogo.html#inicio"><span class="brand-mark"><i class="bi bi-controller"></i></span>JuegaYa</a><div class="d-flex gap-3"><a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a><a href="#" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a></div></div></footer>
+
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="carrito" aria-labelledby="carritoTitulo">
+    <div class="offcanvas-header border-bottom"><div><small class="text-secondary">RESUMEN</small><h2 class="offcanvas-title h4" id="carritoTitulo">Mi reserva</h2></div><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button></div>
+    <div class="offcanvas-body d-flex flex-column">
+      <div class="cart-context" id="datosEvento"><i class="bi bi-calendar2"></i><span>Elige una fecha para ver disponibilidad</span></div>
+      <div class="flex-grow-1 py-3" id="itemsCarrito"><div class="cart-empty text-center py-5"><i class="bi bi-bag"></i><h3 class="h5 mt-3">Tu reserva está vacía</h3><p class="text-secondary">Agrega un juego desde el catálogo.</p></div></div>
+      <div class="cart-total border-top pt-3">
+        <div class="d-flex justify-content-between mb-1"><span>Subtotal</span><strong id="subtotalCarrito">$0</strong></div>
+        <small class="text-secondary">El transporte se calcula según la comuna.</small>
+        <button class="btn btn-primary btn-lg w-100 mt-3" id="confirmarReserva" disabled>Solicitar reserva</button>
+        <a href="detalle-compra.html" class="btn btn-outline-dark w-100 mt-2">Ver detalle de compra</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="appToast" class="toast" role="status" aria-live="polite" aria-atomic="true"><div class="toast-body d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i><span id="toastMensaje">Juego agregado</span></div></div></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
