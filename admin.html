@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administración | JuegaYa</title>
+  <style>
+    :root {
+      --brand: #6c4cff; --brand-dark: #4e35d8; --brand-tint: #ede9ff;
+      --ink: #17151f; --muted: #6d6a76; --surface: #f6f5fa; --line: #e7e4ef;
+      --lime: #d9ff63; --danger: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--surface); color: var(--ink);
+           font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    :focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+    header { background: var(--ink); color: #fff; }
+    .barra { max-width: 62rem; margin: 0 auto; padding: 1rem 1.25rem 0; }
+    .marca { display: flex; align-items: baseline; gap: .6rem; }
+    .marca h1 { margin: 0; font-size: 1.25rem; letter-spacing: -.02em; }
+    .marca span { color: #a19eb0; font-size: .85rem; }
+    nav { display: flex; gap: .25rem; margin-top: .9rem; overflow-x: auto; }
+    nav button { background: none; border: 0; border-bottom: 3px solid transparent; color: #c9c6d3;
+                 padding: .6rem .9rem; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    nav button:hover { color: #fff; }
+    nav button[aria-selected="true"] { color: #fff; border-bottom-color: var(--lime); }
+
+    main { max-width: 62rem; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+    h2 { margin: 0; font-size: 1.5rem; letter-spacing: -.03em; }
+    .cabecera { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1rem; margin-bottom: 1.25rem; }
+    .cabecera p { margin: .15rem 0 0; color: var(--muted); }
+
+    button.btn, select.btn { font: inherit; font-weight: 600; border-radius: .55rem; padding: .5rem .9rem; cursor: pointer;
+                             border: 1px solid var(--line); background: #fff; color: var(--ink); }
+    .btn:hover { border-color: var(--brand); }
+    .btn.primario { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .btn.primario:hover { background: var(--brand-dark); }
+    .btn.peligro { color: var(--danger); }
+    .btn.chico { padding: .3rem .65rem; font-size: .85rem; }
+
+    .indicadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); background: #fff;
+                   border: 1px solid var(--line); border-radius: .8rem; }
+    .indicador { padding: 1.1rem 1.25rem; border-left: 1px solid var(--line); }
+    .indicador:first-child { border-left: 0; }
+    .indicador strong { display: block; font-size: 1.85rem; letter-spacing: -.04em; line-height: 1.1; }
+    .indicador span { color: var(--muted); font-size: .85rem; }
+
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: .8rem; overflow: hidden; }
+    .scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: .8rem; color: var(--muted); font-weight: 600; padding: .7rem 1rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    td { padding: .75rem 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    tr:last-child td { border-bottom: 0; }
+    .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .sec { display: block; color: var(--muted); font-size: .82rem; }
+    .acciones { text-align: right; white-space: nowrap; }
+    .acciones .btn + .btn { margin-left: .3rem; }
+    .vacio { padding: 2.5rem 1rem; text-align: center; color: var(--muted); }
+
+    .chip { display: inline-block; padding: .15rem .6rem; border-radius: 2rem; font-size: .8rem; font-weight: 600; }
+    .chip.ok { background: #dcfce7; color: #166534; }
+    .chip.off { background: #eeecf3; color: #4b4858; }
+
+    .filtros { display: flex; gap: .6rem; margin-bottom: 1rem; }
+    .filtros select { min-width: 12rem; }
+
+    dialog { border: 0; border-radius: .9rem; padding: 0; width: min(30rem, 92vw); box-shadow: 0 20px 60px rgba(23, 21, 31, .35); }
+    dialog::backdrop { background: rgba(23, 21, 31, .5); }
+    dialog form { padding: 1.5rem; display: grid; gap: 1rem; }
+    dialog h3 { margin: 0; font-size: 1.2rem; }
+    label { display: grid; gap: .3rem; font-weight: 600; font-size: .85rem; }
+    input, select, textarea { font: inherit; font-weight: 400; padding: .55rem .7rem; border: 1px solid #cfcbdb; border-radius: .5rem; width: 100%; background: #fff; }
+    label.check { display: flex; align-items: center; gap: .5rem; font-weight: 400; font-size: .95rem; }
+    label.check input { width: auto; }
+    .fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .pie-dialog { display: flex; justify-content: flex-end; gap: .6rem; }
+    .ayuda { color: var(--muted); font-size: .82rem; font-weight: 400; }
+
+    .respaldo { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+    .respaldo p { margin: 0 auto 0 0; color: var(--muted); font-size: .85rem; max-width: 34rem; }
+
+    #aviso { position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%); background: var(--ink); color: #fff;
+             padding: .65rem 1.1rem; border-radius: .6rem; opacity: 0; pointer-events: none; transition: opacity .2s; }
+    #aviso.visible { opacity: 1; }
+
+    @media (max-width: 40rem) {
+      .indicador { border-left: 0; border-top: 1px solid var(--line); }
+      .indicador:first-child { border-top: 0; }
+      .fila2 { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) { #aviso { transition: none; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="barra">
+    <div class="marca"><h1>JuegaYa</h1><span>Administración</span></div>
+    <nav role="tablist" aria-label="Secciones">
+      <button role="tab" data-vista="resumen" aria-selected="true">Resumen</button>
+      <button role="tab" data-vista="juegos" aria-selected="false">Juegos</button>
+      <button role="tab" data-vista="reservas" aria-selected="false">Reservas</button>
+    </nav>
+  </div>
+</header>
+
+<main id="contenido"></main>
+
+<!-- Formulario de juego -->
+<dialog id="dlgJuego" aria-labelledby="dlgJuegoTitulo">
+  <form id="formJuego" method="dialog">
+    <h3 id="dlgJuegoTitulo">Nuevo juego</h3>
+    <input type="hidden" id="jId">
+    <label>Nombre <input id="jNombre" required maxlength="60"></label>
+    <div class="fila2">
+      <label>Categoría
+        <select id="jCategoria">
+          <option value="Inflable">Inflable</option>
+          <option value="Acuático">Acuático</option>
+          <option value="Interior">Interior</option>
+        </select>
+      </label>
+      <label>Precio por jornada (CLP)
+        <input id="jPrecio" type="number" min="1" step="1" required>
+        <span class="ayuda">Una jornada son 6 horas.</span>
+      </label>
+    </div>
+    <label>Descripción <textarea id="jDescripcion" rows="2" maxlength="200"></textarea></label>
+    <label class="check"><input type="checkbox" id="jActivo" checked> Visible para los clientes</label>
+    <div class="pie-dialog">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn primario">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Formulario de reserva -->
+<dialog id="dlgReserva" aria-labelledby="dlgReservaTitulo">
+  <form id="formReserva" method="dialog">
+    <h3 id="dlgReservaTitulo">Nueva reserva</h3>
+    <div class="fila2">
+      <label>Cliente <input id="rCliente" required maxlength="60"></label>
+      <label>Teléfono <input id="rTelefono" type="tel" required maxlength="20"></label>
+    </div>
+    <label>Juego <select id="rJuego" required></select></label>
+    <div class="fila2">
+      <label>Fecha del evento <input id="rFecha" type="date" required></label>
+      <label>Horas (1 a 6) <input id="rHoras" type="number" min="1" max="6" value="6" required></label>
+    </div>
+    <p class="ayuda" id="rTotal" style="margin:0"></p>
+    <div class="pie-dialog">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn primario">Crear reserva</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="aviso" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const CLAVE = "juegaya-admin-v1";
+  const ESTADOS = { pendiente: "Pendiente", confirmada: "Confirmada", completada: "Completada", cancelada: "Cancelada" };
+  const $ = (s, r = document) => r.querySelector(s);
+  const clp = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" });
+  const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const aISO = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const fecha = iso => new Date(iso + "T12:00:00").toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" });
+  const idNuevo = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const precioHora = j => Math.round(j.precio / 6);
+
+  // ---------- Datos (se guardan en este navegador) ----------
+  function datosEjemplo() {
+    const hoy = new Date();
+    const en = n => aISO(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + n));
+    return {
+      juegos: [
+        { id: "castillo", nombre: "Castillo Aventura", categoria: "Inflable", precio: 45000, descripcion: "Castillo con zona de salto y resbalín.", activo: true },
+        { id: "tobogan", nombre: "Tobogán Jungla", categoria: "Acuático", precio: 95000, descripcion: "Tobogán de gran formato con piscina.", activo: true },
+        { id: "arcade", nombre: "Arcade Retro", categoria: "Interior", precio: 55000, descripcion: "Máquina multijuegos con clásicos.", activo: true },
+        { id: "taca-taca", nombre: "Taca taca", categoria: "Interior", precio: 45000, descripcion: "Mesa de fútbol para 4 jugadores.", activo: true },
+        { id: "hockey", nombre: "Hockey", categoria: "Interior", precio: 70000, descripcion: "Air hockey de tamaño completo.", activo: true }
+      ],
+      reservas: [
+        { id: idNuevo(), codigo: "JY-4F2KQ", cliente: "María Pérez", telefono: "+56 9 1111 1111", juegoId: "castillo", fecha: en(2), horas: 6, total: 45000, estado: "pendiente" },
+        { id: idNuevo(), codigo: "JY-9XH3M", cliente: "Carlos Soto", telefono: "+56 9 2222 2222", juegoId: "tobogan", fecha: en(5), horas: 4, total: 63332, estado: "confirmada" }
+      ]
+    };
+  }
+
+  let datos;
+  let respaldoEnMemoria = false;
+  function cargar() {
+    try {
+      const guardado = localStorage.getItem(CLAVE);
+      if (guardado) { const d = JSON.parse(guardado); if (d && Array.isArray(d.juegos) && Array.isArray(d.reservas)) return d; }
+    } catch (e) { respaldoEnMemoria = true; }
+    return datosEjemplo();
+  }
+  function guardar() {
+    try { localStorage.setItem(CLAVE, JSON.stringify(datos)); }
+    catch (e) { respaldoEnMemoria = true; aviso("Este navegador no permite guardar: usa Exportar para no perder los datos"); }
+  }
+  datos = cargar();
+
+  let avisoTimer;
+  function aviso(texto) {
+    const el = $("#aviso");
+    el.textContent = texto; el.classList.add("visible");
+    clearTimeout(avisoTimer); avisoTimer = setTimeout(() => el.classList.remove("visible"), 2600);
+  }
+
+  const juegoPorId = id => datos.juegos.find(j => j.id === id);
+  const codigoReserva = () => "JY-" + Math.random().toString(36).slice(2, 7).toUpperCase();
+  const ocupa = r => r.estado === "pendiente" || r.estado === "confirmada";
+  const hayChoque = (juegoId, f, ignorarId) => datos.reservas.some(r => r.juegoId === juegoId && r.fecha === f && ocupa(r) && r.id !== ignorarId);
+
+  // ---------- Vistas ----------
+  let vista = "resumen";
+  let filtroEstado = "";
+
+  function pintar() {
+    document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.vista === vista)));
+    $("#contenido").innerHTML = { resumen: vistaResumen, juegos: vistaJuegos, reservas: vistaReservas }[vista]() + pieRespaldo();
+  }
+
+  function vistaResumen() {
+    const pendientes = datos.reservas.filter(r => r.estado === "pendiente").length;
+    const confirmadas = datos.reservas.filter(r => r.estado === "confirmada").length;
+    const ingresos = datos.reservas.filter(r => r.estado === "confirmada" || r.estado === "completada").reduce((t, r) => t + r.total, 0);
+    const activos = datos.juegos.filter(j => j.activo).length;
+    const hoy = aISO(new Date());
+    const proximas = datos.reservas.filter(r => ocupa(r) && r.fecha >= hoy).sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 5);
+
+    return `
+      <div class="cabecera"><div><h2>Resumen</h2><p>Lo importante de tu negocio de un vistazo.</p></div></div>
+      <div class="indicadores">
+        <div class="indicador"><strong>${pendientes}</strong><span>Reservas por confirmar</span></div>
+        <div class="indicador"><strong>${confirmadas}</strong><span>Reservas confirmadas</span></div>
+        <div class="indicador"><strong>${clp.format(ingresos)}</strong><span>Ingresos confirmados</span></div>
+        <div class="indicador"><strong>${activos}</strong><span>Juegos visibles</span></div>
+      </div>
+      <h2 style="font-size:1.05rem;margin:2rem 0 .75rem">Próximos eventos</h2>
+      <div class="panel">${proximas.length ? `<div class="scroll"><table>
+        <thead><tr><th>Fecha</th><th>Cliente</th><th>Juego</th><th>Estado</th></tr></thead>
+        <tbody>${proximas.map(r => `<tr><td>${fecha(r.fecha)}</td><td>${esc(r.cliente)}</td>
+          <td>${esc((juegoPorId(r.juegoId) || {}).nombre || "Juego eliminado")}</td><td>${ESTADOS[r.estado]}</td></tr>`).join("")}</tbody></table></div>`
+        : `<div class="vacio">No hay eventos próximos.</div>`}</div>`;
+  }
+
+  function vistaJuegos() {
+    return `
+      <div class="cabecera">
+        <div><h2>Juegos</h2><p>Los juegos que ofreces y cuánto cuestan.</p></div>
+        <button class="btn primario" data-accion="nuevo-juego">+ Nuevo juego</button>
+      </div>
+      <div class="panel">${datos.juegos.length ? `<div class="scroll"><table>
+        <thead><tr><th>Juego</th><th>Categoría</th><th class="num">Precio jornada</th><th>Estado</th><th></th></tr></thead>
+        <tbody>${datos.juegos.map(j => `<tr>
+          <td><strong>${esc(j.nombre)}</strong><span class="sec">${esc(j.descripcion)}</span></td>
+          <td>${esc(j.categoria)}</td>
+          <td class="num">${clp.format(j.precio)}<span class="sec">${clp.format(precioHora(j))} por hora</span></td>
+          <td><span class="chip ${j.activo ? "ok" : "off"}">${j.activo ? "Visible" : "Oculto"}</span></td>
+          <td class="acciones">
+            <button class="btn chico" data-accion="editar-juego" data-id="${esc(j.id)}">Editar</button>
+            <button class="btn chico" data-accion="alternar-juego" data-id="${esc(j.id)}">${j.activo ? "Ocultar" : "Mostrar"}</button>
+            <button class="btn chico peligro" data-accion="borrar-juego" data-id="${esc(j.id)}">Eliminar</button>
+          </td></tr>`).join("")}</tbody></table></div>`
+        : `<div class="vacio">Aún no tienes juegos. Crea el primero con “Nuevo juego”.</div>`}</div>`;
+  }
+
+  function vistaReservas() {
+    const lista = datos.reservas
+      .filter(r => !filtroEstado || r.estado === filtroEstado)
+      .sort((a, b) => b.fecha.localeCompare(a.fecha));
+    return `
+      <div class="cabecera">
+        <div><h2>Reservas</h2><p>Confirma, completa o cancela cada reserva.</p></div>
+        <button class="btn primario" data-accion="nueva-reserva">+ Nueva reserva</button>
+      </div>
+      <div class="filtros">
+        <select class="btn" id="filtroEstado" aria-label="Filtrar por estado">
+          <option value="">Todos los estados</option>
+          ${Object.entries(ESTADOS).map(([v, t]) => `<option value="${v}"${filtroEstado === v ? " selected" : ""}>${t}</option>`).join("")}
+        </select>
+      </div>
+      <div class="panel">${lista.length ? `<div class="scroll"><table>
+        <thead><tr><th>Código</th><th>Cliente</th><th>Juego</th><th>Fecha</th><th class="num">Total</th><th>Estado</th><th></th></tr></thead>
+        <tbody>${lista.map(r => `<tr>
+          <td><strong>${esc(r.codigo)}</strong></td>
+          <td>${esc(r.cliente)}<span class="sec">${esc(r.telefono)}</span></td>
+          <td>${esc((juegoPorId(r.juegoId) || {}).nombre || "Juego eliminado")}<span class="sec">${r.horas} h</span></td>
+          <td>${fecha(r.fecha)}</td>
+          <td class="num">${clp.format(r.total)}</td>
+          <td><select class="btn chico" data-estado="${esc(r.id)}" aria-label="Estado de ${esc(r.codigo)}">
+            ${Object.entries(ESTADOS).map(([v, t]) => `<option value="${v}"${r.estado === v ? " selected" : ""}>${t}</option>`).join("")}
+          </select></td>
+          <td class="acciones"><button class="btn chico peligro" data-accion="borrar-reserva" data-id="${esc(r.id)}">Eliminar</button></td>
+        </tr>`).join("")}</tbody></table></div>`
+        : `<div class="vacio">${datos.reservas.length ? "Ninguna reserva coincide con el filtro." : "Aún no hay reservas."}</div>`}</div>`;
+  }
+
+  function pieRespaldo() {
+    return `<div class="respaldo">
+      <p>Los datos se guardan solo en este navegador. Exporta una copia de vez en cuando para no perderlos.</p>
+      <button class="btn chico" data-accion="exportar">Exportar copia</button>
+      <button class="btn chico" data-accion="importar">Importar copia</button>
+      <button class="btn chico peligro" data-accion="reiniciar">Restablecer ejemplo</button>
+      <input type="file" id="archivoImportar" accept="application/json" hidden>
+    </div>`;
+  }
+
+  // ---------- Juegos ----------
+  function abrirJuego(juego) {
+    $("#dlgJuegoTitulo").textContent = juego ? "Editar juego" : "Nuevo juego";
+    $("#jId").value = juego ? juego.id : "";
+    $("#jNombre").value = juego ? juego.nombre : "";
+    $("#jCategoria").value = juego ? juego.categoria : "Inflable";
+    $("#jPrecio").value = juego ? juego.precio : "";
+    $("#jDescripcion").value = juego ? juego.descripcion : "";
+    $("#jActivo").checked = juego ? juego.activo : true;
+    $("#dlgJuego").showModal();
+    $("#jNombre").focus();
+  }
+
+  $("#formJuego").addEventListener("submit", () => {
+    const id = $("#jId").value;
+    const nuevo = {
+      nombre: $("#jNombre").value.trim(),
+      categoria: $("#jCategoria").value,
+      precio: parseInt($("#jPrecio").value, 10),
+      descripcion: $("#jDescripcion").value.trim(),
+      activo: $("#jActivo").checked
+    };
+    if (!nuevo.nombre || !(nuevo.precio > 0)) return;
+    if (id) Object.assign(juegoPorId(id), nuevo);
+    else datos.juegos.push({ id: idNuevo(), ...nuevo });
+    guardar(); pintar(); aviso(id ? "Juego actualizado" : "Juego creado");
+  });
+
+  // ---------- Reservas ----------
+  function actualizarTotalReserva() {
+    const j = juegoPorId($("#rJuego").value);
+    const horas = Math.min(6, Math.max(1, parseInt($("#rHoras").value, 10) || 0));
+    $("#rTotal").textContent = j && horas ? `Total: ${clp.format(precioHora(j) * horas)} (${clp.format(precioHora(j))} por hora)` : "";
+  }
+
+  function abrirReserva() {
+    const disponibles = datos.juegos.filter(j => j.activo);
+    if (!disponibles.length) { aviso("Primero crea o muestra al menos un juego"); return; }
+    $("#formReserva").reset();
+    $("#rJuego").innerHTML = disponibles.map(j => `<option value="${esc(j.id)}">${esc(j.nombre)}</option>`).join("");
+    $("#rFecha").min = aISO(new Date());
+    $("#rHoras").value = 6;
+    actualizarTotalReserva();
+    $("#dlgReserva").showModal();
+    $("#rCliente").focus();
+  }
+
+  $("#rJuego").addEventListener("change", actualizarTotalReserva);
+  $("#rHoras").addEventListener("input", actualizarTotalReserva);
+
+  $("#formReserva").addEventListener("submit", evento => {
+    const juegoId = $("#rJuego").value;
+    const f = $("#rFecha").value;
+    const horas = Math.min(6, Math.max(1, parseInt($("#rHoras").value, 10) || 0));
+    if (hayChoque(juegoId, f)) {
+      evento.preventDefault();
+      aviso("Ese juego ya está reservado para esa fecha");
+      return;
+    }
+    datos.reservas.push({
+      id: idNuevo(), codigo: codigoReserva(),
+      cliente: $("#rCliente").value.trim(), telefono: $("#rTelefono").value.trim(),
+      juegoId, fecha: f, horas, total: precioHora(juegoPorId(juegoId)) * horas, estado: "pendiente"
+    });
+    guardar(); pintar(); aviso("Reserva creada");
+  });
+
+  // ---------- Eventos ----------
+  document.querySelector("nav").addEventListener("click", e => {
+    const b = e.target.closest("button[data-vista]");
+    if (b) { vista = b.dataset.vista; pintar(); }
+  });
+
+  document.querySelectorAll("[data-cerrar]").forEach(b => b.addEventListener("click", () => b.closest("dialog").close()));
+
+  $("#contenido").addEventListener("click", e => {
+    const b = e.target.closest("[data-accion]");
+    if (!b) return;
+    const id = b.dataset.id;
+    switch (b.dataset.accion) {
+      case "nuevo-juego": abrirJuego(null); break;
+      case "editar-juego": abrirJuego(juegoPorId(id)); break;
+      case "alternar-juego": { const j = juegoPorId(id); j.activo = !j.activo; guardar(); pintar(); aviso(j.activo ? "Juego visible" : "Juego oculto"); break; }
+      case "borrar-juego": {
+        const j = juegoPorId(id);
+        const enUso = datos.reservas.some(r => r.juegoId === id && ocupa(r));
+        if (enUso) { aviso("Tiene reservas activas: cancélalas antes o solo ocúltalo"); break; }
+        if (confirm(`¿Eliminar “${j.nombre}”? No se puede deshacer.`)) { datos.juegos = datos.juegos.filter(x => x.id !== id); guardar(); pintar(); aviso("Juego eliminado"); }
+        break;
+      }
+      case "nueva-reserva": abrirReserva(); break;
+      case "borrar-reserva":
+        if (confirm("¿Eliminar esta reserva? Si solo quieres liberarla, mejor cámbiala a Cancelada.")) {
+          datos.reservas = datos.reservas.filter(x => x.id !== id); guardar(); pintar(); aviso("Reserva eliminada");
+        }
+        break;
+      case "exportar": {
+        const enlace = document.createElement("a");
+        enlace.href = URL.createObjectURL(new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" }));
+        enlace.download = `juegaya-copia-${aISO(new Date())}.json`;
+        enlace.click(); URL.revokeObjectURL(enlace.href);
+        break;
+      }
+      case "importar": $("#archivoImportar").click(); break;
+      case "reiniciar":
+        if (confirm("¿Borrar todo y volver a los datos de ejemplo?")) { datos = datosEjemplo(); guardar(); pintar(); aviso("Datos restablecidos"); }
+        break;
+    }
+  });
+
+  $("#contenido").addEventListener("change", e => {
+    if (e.target.id === "filtroEstado") { filtroEstado = e.target.value; pintar(); return; }
+    if (e.target.dataset.estado) {
+      const r = datos.reservas.find(x => x.id === e.target.dataset.estado);
+      const nuevo = e.target.value;
+      if ((nuevo === "pendiente" || nuevo === "confirmada") && hayChoque(r.juegoId, r.fecha, r.id)) {
+        aviso("Ese juego ya está reservado para esa fecha"); pintar(); return;
+      }
+      r.estado = nuevo; guardar(); pintar(); aviso("Estado actualizado");
+      return;
+    }
+    if (e.target.id === "archivoImportar" && e.target.files[0]) {
+      const lector = new FileReader();
+      lector.onload = () => {
+        try {
+          const d = JSON.parse(lector.result);
+          if (!d || !Array.isArray(d.juegos) || !Array.isArray(d.reservas)) throw new Error("formato");
+          datos = d; guardar(); pintar(); aviso("Copia importada");
+        } catch (err) { aviso("El archivo no es una copia válida de JuegaYa"); }
+      };
+      lector.readAsText(e.target.files[0]);
+    }
+  });
+
+  pintar();
+  if (respaldoEnMemoria) aviso("Este navegador no permite guardar: usa Exportar para no perder los datos");
+})();
+</script>
+</body>
+</html>
