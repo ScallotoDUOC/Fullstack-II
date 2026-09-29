@@ -7,6 +7,124 @@ const formatoCLP = new Intl.NumberFormat("es-CL", { style: "currency", currency:
 // porque lo uso desde varias partes del código (catálogo, login, registro, etc)
 const toast = bootstrap.Toast.getOrCreateInstance(document.querySelector("#appToast"));
 
+// ===================================================================
+// esto es la "ficha" completa de cada juego, para la página detalle-producto.html
+// la dejo separada acá arriba (no adentro de inicializarCatalogo) porque detalle-producto.html
+// no tiene el catálogo cargado, así que necesita sus propios datos para poder mostrar algo (hu-09, hu-10, hu-41, hu-43)
+// ===================================================================
+const productosDetalle = {
+  castillo: {
+    nombre: "Castillo Aventura", categoria: "Inflable", precio: 45000,
+    descripcion: "Castillo con zona de salto y resbalín. Ideal para cumpleaños.",
+    imagen: "https://inflablesmidas.cl/attachments/Image/plaza-2022.jpg", alt: "Castillo inflable colorido para niños",
+    rating: "4,9", meta: [["bi-people", "7 niños"], ["bi-rulers", "4,5 × 3 m"]],
+    resenas: [
+      { autor: "Marcela R.", estrellas: 5, comentario: "Llegó impecable y los niños encantados." },
+      { autor: "Pablo G.", estrellas: 5, comentario: "Fácil de coordinar, muy recomendable." }
+    ]
+  },
+  tobogan: {
+    nombre: "Tobogán Jungla", categoria: "Acuático", precio: 95000,
+    descripcion: "Tobogán de gran formato con piscina de poca profundidad.",
+    imagen: "https://rentaparty.cl/wp-content/uploads/2025/10/1000589305-1024x1024.jpg", alt: "Tobogán inflable acuático con temática de jungla",
+    rating: "4,8", meta: [["bi-people", "10 niños"], ["bi-rulers", "5 × 5 m"]],
+    resenas: [
+      { autor: "Ignacia T.", estrellas: 5, comentario: "El favorito de la fiesta, todos querían subir." },
+      { autor: "Cristóbal M.", estrellas: 4, comentario: "Excelente, solo faltó un poco más de agua." }
+    ]
+  },
+  arcade: {
+    nombre: "Arcade Retro", categoria: "Interior", precio: 55000,
+    descripcion: "Máquina multijuegos para competir y revivir los clásicos.",
+    imagen: "", alt: "Máquina arcade de juegos retro", // este no tiene foto, usa el fondo con ícono (se arma más abajo)
+    rating: "4,7", meta: [["bi-people", "2 jugadores"], ["bi-plug", "220 V"]],
+    resenas: [
+      { autor: "Diego F.", estrellas: 5, comentario: "Los adultos también se pusieron a jugar." }
+    ]
+  },
+  "taca-taca": {
+    nombre: "Taca taca", categoria: "Interior", precio: 45000,
+    descripcion: "Mesa de fútbol para partidos rápidos entre amigos y familia.",
+    imagen: "https://colinainflables.imgix.net/producto/img_683a096bee7b25_97896834.jpg?fit=crop&fm=webp&h=600&lossless=true&q=25&w=600", alt: "Mesa de taca taca instalada sobre el césped",
+    rating: "4,8", meta: [["bi-people", "4 jugadores"], ["bi-lightning", "Sin corriente"]],
+    resenas: [
+      { autor: "Valentina S.", estrellas: 5, comentario: "Perfecto para el cumpleaños, muy resistente." }
+    ]
+  },
+  hockey: {
+    nombre: "Hockey", categoria: "Interior", precio: 70000,
+    descripcion: "Air hockey de tamaño completo para duelos llenos de velocidad.",
+    imagen: "https://www.juegosbabymandi.cl/img/air-hockey-grande.jpg", alt: "Mesa de air hockey con dos discos rojos",
+    rating: "4,9", meta: [["bi-people", "2 jugadores"], ["bi-plug", "220 V"]],
+    resenas: [
+      { autor: "Nicolás A.", estrellas: 5, comentario: "Rápido de armar y funcionó impecable." }
+    ]
+  }
+};
+
+// para no meter caracteres raros de html si un nombre o comentario trae < > " '
+function esc(texto) {
+  return String(texto ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// esta función llena la página detalle-producto.html con la info del juego que venga en la URL (?id=castillo, por ejemplo)
+function inicializarDetalleProducto() {
+  const ficha = document.querySelector("#dpFicha");
+  if (!ficha) return; // si no estamos en detalle-producto.html, ni sigo
+
+  const HORAS_JORNADA_DETALLE = 6; // esta página no depende de inicializarCatalogo(), así que la dejo propia acá
+
+  // saco el "id" que viene pegado en la URL, tipo detalle-producto.html?id=castillo
+  const idBuscado = new URLSearchParams(window.location.search).get("id");
+  const producto = productosDetalle[idBuscado];
+
+  if (!producto) {
+    // si no existe ese id, muestro el mensaje de "no encontrado" y no sigo
+    document.querySelector("#dpNoEncontrado").classList.remove("d-none");
+    return;
+  }
+
+  const precioHora = Math.round(producto.precio / HORAS_JORNADA_DETALLE);
+  const formatoCLP = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" });
+
+  document.title = `${producto.nombre} | JuegaYa`;
+  document.querySelector("#dpCategoria").textContent = producto.categoria.toUpperCase();
+  document.querySelector("#dpNombre").textContent = producto.nombre;
+  document.querySelector("#dpRating").textContent = producto.rating;
+  document.querySelector("#dpDescripcion").textContent = producto.descripcion;
+  document.querySelector("#dpMetaLista").innerHTML = producto.meta.map(([icono, texto]) => `<span><i class="bi ${icono}"></i> ${esc(texto)}</span>`).join("");
+  document.querySelector("#dpPrecioJornada").textContent = formatoCLP.format(producto.precio);
+  document.querySelector("#dpPrecioHora").textContent = `${formatoCLP.format(precioHora)} / hora`;
+  document.querySelector("#dpReservarLink").href = `catalogo.html#juego-${encodeURIComponent(idBuscado)}`;
+
+  // si tiene foto la muestro, si no (como el arcade), pongo el fondo con ícono en vez de una imagen rota
+  if (producto.imagen) {
+    document.querySelector("#dpImagen").src = producto.imagen;
+    document.querySelector("#dpImagen").alt = producto.alt || producto.nombre;
+  } else {
+    document.querySelector("#dpImagenWrap").classList.add("arcade-visual");
+    document.querySelector("#dpImagenWrap").innerHTML = `<i class="bi bi-joystick" style="font-size:4rem"></i><span>${esc(producto.categoria.toUpperCase())}</span>`;
+  }
+
+  // reseñas completas del producto (o un mensajito si todavía no tiene ninguna)
+  document.querySelector("#dpCantidadResenas").textContent = producto.resenas.length
+    ? `(${producto.resenas.length} reseña${producto.resenas.length === 1 ? "" : "s"})`
+    : "(sin reseñas todavía)";
+  document.querySelector("#dpResenas").innerHTML = producto.resenas.length
+    ? producto.resenas.map(r => `
+      <div class="cart-item">
+        <div>
+          <strong>${esc(r.autor)}</strong>
+          <small class="d-block text-secondary">${"★".repeat(r.estrellas)}${"☆".repeat(5 - r.estrellas)}</small>
+          <p class="text-secondary mb-0 mt-1">${esc(r.comentario)}</p>
+        </div>
+      </div>`).join("")
+    : `<p class="text-secondary">Este juego todavía no tiene reseñas de clientes.</p>`;
+
+  document.querySelector("#dpFicha").classList.remove("d-none");
+  document.querySelector("#dpSeccionResenas").classList.remove("d-none");
+}
+
 // esta función junta TODO lo del catálogo y el carrito
 // ojo: solo se ejecuta si estamos parados en catalogo.html, si no, ni se llama (más abajo se ve eso)
 function inicializarCatalogo() {
@@ -601,3 +719,4 @@ function inicializarLogin() {
 if (document.querySelector("#listaJuegos")) inicializarCatalogo();
 inicializarRegistro(); // esta función misma revisa si existe el form, así que no pasa nada si la llamo siempre
 inicializarLogin(); // lo mismo acá
+inicializarDetalleProducto(); // y esta revisa si existe #dpFicha, mismo cuento
