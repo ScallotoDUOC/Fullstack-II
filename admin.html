@@ -61,9 +61,28 @@
     .chip { display: inline-block; padding: .15rem .6rem; border-radius: 2rem; font-size: .8rem; font-weight: 600; }
     .chip.ok { background: #dcfce7; color: #166534; }
     .chip.off { background: #eeecf3; color: #4b4858; }
+    .chip.warn { background: #fef3c7; color: #92400e; }
 
-    .filtros { display: flex; gap: .6rem; margin-bottom: 1rem; }
-    .filtros select { min-width: 12rem; }
+    .filtros { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1rem; }
+    .filtros select, .filtros input { min-width: 12rem; }
+
+    /* Calendario general de reservas */
+    .calendario { background: #fff; border: 1px solid var(--line); border-radius: .8rem; overflow: hidden; }
+    .cal-cabecera, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .cal-cabecera div { padding: .6rem; font-size: .8rem; font-weight: 600; color: var(--muted); text-align: center; border-bottom: 1px solid var(--line); }
+    .cal-grid .dia { min-height: 5.5rem; padding: .4rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: .8rem; }
+    .cal-grid .dia:nth-child(7n) { border-right: 0; }
+    .cal-grid .dia.vacio-dia { background: #fbfaff; }
+    .evento-cal { display: block; margin-top: .25rem; padding: .15rem .4rem; border-radius: .35rem; background: var(--brand-tint); color: var(--brand-dark); font-size: .72rem; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .evento-cal.cancelada { background: #eeecf3; color: #4b4858; text-decoration: line-through; }
+    .evento-cal.completada { background: #dcfce7; color: #166534; }
+
+    /* Respuestas de reclamos / mensajes ya contestados */
+    .respuesta { margin-top: .4rem; padding: .5rem .7rem; background: var(--surface); border-radius: .5rem; font-size: .85rem; }
+    .respuesta strong { display: block; font-size: .75rem; color: var(--muted); margin-bottom: .15rem; }
+
+    .checklist { display: grid; gap: .5rem; }
+    .checklist label.check { padding: .5rem .7rem; background: var(--surface); border-radius: .5rem; }
 
     dialog { border: 0; border-radius: .9rem; padding: 0; width: min(30rem, 92vw); box-shadow: 0 20px 60px rgba(23, 21, 31, .35); }
     dialog::backdrop { background: rgba(23, 21, 31, .5); }
@@ -84,6 +103,15 @@
              padding: .65rem 1.1rem; border-radius: .6rem; opacity: 0; pointer-events: none; transition: opacity .2s; }
     #aviso.visible { opacity: 1; }
 
+    /* Pantalla de acceso al panel */
+    .acceso { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; }
+    .acceso-caja { width: min(22rem, 100%); background: #fff; border: 1px solid var(--line); border-radius: .9rem; padding: 2rem; }
+    .acceso-caja h1 { font-size: 1.1rem; margin: 0 0 .25rem; }
+    .acceso-caja p.ayuda { margin: 0 0 1.25rem; }
+    .acceso-caja form { display: grid; gap: 1rem; }
+    .acceso-error { color: var(--danger); font-size: .85rem; min-height: 1.2em; }
+    .salir { margin-left: auto; align-self: center; }
+
     @media (max-width: 40rem) {
       .indicador { border-left: 0; border-top: 1px solid var(--line); }
       .indicador:first-child { border-top: 0; }
@@ -94,18 +122,45 @@
 </head>
 <body>
 
-<header>
-  <div class="barra">
-    <div class="marca"><h1>JuegaYa</h1><span>Administración</span></div>
-    <nav role="tablist" aria-label="Secciones">
-      <button role="tab" data-vista="resumen" aria-selected="true">Resumen</button>
-      <button role="tab" data-vista="juegos" aria-selected="false">Juegos</button>
-      <button role="tab" data-vista="reservas" aria-selected="false">Reservas</button>
-    </nav>
+<!-- Pantalla de acceso: se muestra mientras no haya una sesión de administrador válida -->
+<div class="acceso" id="pantallaAcceso">
+  <div class="acceso-caja">
+    <h1>JuegaYa · Administración</h1>
+    <p class="ayuda">Ingresa tus credenciales de administrador para continuar.</p>
+    <form id="formAcceso">
+      <label>Usuario <input id="accUsuario" required autocomplete="username"></label>
+      <label>Contraseña <input id="accClave" type="password" required autocomplete="current-password"></label>
+      <p class="acceso-error" id="accError" role="alert"></p>
+      <button type="submit" class="btn primario">Ingresar</button>
+    </form>
+    <p class="ayuda" style="margin-top:1.25rem">Credenciales de prueba: <strong>admin</strong> / <strong>juegaya2026</strong></p>
   </div>
-</header>
+</div>
 
-<main id="contenido"></main>
+<!-- Panel de administración: oculto hasta iniciar sesión -->
+<div id="panelAdmin" hidden>
+  <header>
+    <div class="barra">
+      <div class="marca"><h1>JuegaYa</h1><span>Administración</span></div>
+      <nav role="tablist" aria-label="Secciones" style="align-items:center">
+        <button role="tab" data-vista="resumen" aria-selected="true">Resumen</button>
+        <button role="tab" data-vista="juegos" aria-selected="false">Juegos</button>
+        <button role="tab" data-vista="reservas" aria-selected="false">Reservas</button>
+        <button role="tab" data-vista="calendario" aria-selected="false">Calendario</button>
+        <button role="tab" data-vista="clientes" aria-selected="false">Clientes</button>
+        <button role="tab" data-vista="reportes" aria-selected="false">Reportes</button>
+        <button role="tab" data-vista="reclamos" aria-selected="false">Reclamos</button>
+        <button role="tab" data-vista="resenas" aria-selected="false">Reseñas</button>
+        <button role="tab" data-vista="descuentos" aria-selected="false">Descuentos</button>
+        <button role="tab" data-vista="mensajes" aria-selected="false">Mensajes</button>
+        <button role="tab" data-vista="historial" aria-selected="false">Historial</button>
+        <button type="button" class="salir" id="btnSalir" style="background:none;border:0;color:#c9c6d3;font:inherit;font-weight:600;cursor:pointer;padding:.6rem 0">Cerrar sesión</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido"></main>
+</div>
 
 <!-- Formulario de juego -->
 <dialog id="dlgJuego" aria-labelledby="dlgJuegoTitulo">
@@ -135,10 +190,11 @@
   </form>
 </dialog>
 
-<!-- Formulario de reserva -->
+<!-- Formulario de reserva (sirve para crear y para editar) -->
 <dialog id="dlgReserva" aria-labelledby="dlgReservaTitulo">
   <form id="formReserva" method="dialog">
     <h3 id="dlgReservaTitulo">Nueva reserva</h3>
+    <input type="hidden" id="rId">
     <div class="fila2">
       <label>Cliente <input id="rCliente" required maxlength="60"></label>
       <label>Teléfono <input id="rTelefono" type="tel" required maxlength="20"></label>
@@ -149,9 +205,135 @@
       <label>Horas (1 a 6) <input id="rHoras" type="number" min="1" max="6" value="6" required></label>
     </div>
     <p class="ayuda" id="rTotal" style="margin:0"></p>
+    <div class="fila2">
+      <label>Vehículo asignado <input id="rVehiculo" maxlength="40" placeholder="Ej: Camioneta 1"></label>
+      <label>Responsable <input id="rResponsable" maxlength="40" placeholder="Ej: Jorge Muñoz"></label>
+    </div>
     <div class="pie-dialog">
       <button type="button" class="btn" data-cerrar>Cancelar</button>
-      <button type="submit" class="btn primario">Crear reserva</button>
+      <button type="submit" class="btn primario" id="rSubmit">Crear reserva</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Checklist al retirar un juego -->
+<dialog id="dlgChecklist" aria-labelledby="dlgChecklistTitulo">
+  <form id="formChecklist" method="dialog">
+    <h3 id="dlgChecklistTitulo">Checklist de retiro</h3>
+    <input type="hidden" id="ckId">
+    <div class="checklist" id="ckItems"></div>
+    <label>Notas adicionales <textarea id="ckNotas" rows="2" maxlength="300"></textarea></label>
+    <div class="pie-dialog">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn primario">Guardar checklist</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Ver perfil de cliente (solo lectura) -->
+<dialog id="dlgCliente" aria-labelledby="dlgClienteTitulo">
+  <form method="dialog" style="padding:1.5rem;display:grid;gap:1rem">
+    <h3 id="dlgClienteTitulo">Perfil del cliente</h3>
+    <div id="dlgClienteCuerpo"></div>
+    <div class="pie-dialog"><button type="submit" class="btn primario">Cerrar</button></div>
+  </form>
+</dialog>
+
+<!-- Registrar / responder reclamo -->
+<dialog id="dlgReclamo" aria-labelledby="dlgReclamoTitulo">
+  <form id="formReclamo" method="dialog">
+    <h3 id="dlgReclamoTitulo">Nuevo reclamo</h3>
+    <div class="fila2">
+      <label>Cliente <input id="qCliente" required maxlength="60"></label>
+      <label>Teléfono <input id="qTelefono" type="tel" maxlength="20"></label>
+    </div>
+    <label>Asunto <input id="qAsunto" required maxlength="80"></label>
+    <label>Detalle del reclamo <textarea id="qMensaje" rows="3" required maxlength="400"></textarea></label>
+    <div class="pie-dialog">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn primario">Registrar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgResponderReclamo" aria-labelledby="dlgResponderReclamoTitulo">
+  <form id="formResponderReclamo" method="dialog">
+    <h3 id="dlgResponderReclamoTitulo">Responder reclamo</h3>
+    <input type="hidden" id="qrId">
+    <p class="ayuda" id="qrResumen" style="margin:0"></p>
+    <label>Respuesta al cliente <textarea id="qrRespuesta" rows="3" required maxlength="400"></textarea></label>
+    <div class="pie-dialog">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn primario">Responder y cerrar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Reportar reseña -->
+<dialog id="dlgResena" aria-labelledby="dlgResenaTitulo">
+  <form id="formResena" method="dialog">
+    <h3 id="dlgResenaTitulo">Reportar reseña</h3>
+    <div class="fila2">
+      <label>Juego <select id="eJuego" required></select></label>
+      <label>Autor <input id="eAutor" required maxlength="60"></label>
+    </div>
+    <label>Comentario <textarea id="eComentario" rows="2" required maxlength="300"></textarea></label>
+    <label>Motivo del reporte <input id="eMotivo" required maxlength="120" placeholder="Ej: lenguaje ofensivo"></label>
+    <div class="pie-dialog">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn primario">Reportar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Código de descuento -->
+<dialog id="dlgDescuento" aria-labelledby="dlgDescuentoTitulo">
+  <form id="formDescuento" method="dialog">
+    <h3 id="dlgDescuentoTitulo">Nuevo código de descuento</h3>
+    <input type="hidden" id="dId">
+    <label>Código <input id="dCodigo" required maxlength="20" style="text-transform:uppercase"></label>
+    <div class="fila2">
+      <label>Tipo
+        <select id="dTipo">
+          <option value="porcentaje">Porcentaje (%)</option>
+          <option value="fijo">Monto fijo (CLP)</option>
+        </select>
+      </label>
+      <label>Valor <input id="dValor" type="number" min="1" required></label>
+    </div>
+    <label class="check"><input type="checkbox" id="dActivo" checked> Código activo</label>
+    <div class="pie-dialog">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn primario">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Mensajes de clientes -->
+<dialog id="dlgMensaje" aria-labelledby="dlgMensajeTitulo">
+  <form id="formMensaje" method="dialog">
+    <h3 id="dlgMensajeTitulo">Nuevo mensaje de cliente</h3>
+    <div class="fila2">
+      <label>Cliente <input id="mCliente" required maxlength="60"></label>
+      <label>Teléfono <input id="mTelefono" type="tel" maxlength="20"></label>
+    </div>
+    <label>Mensaje <textarea id="mMensaje" rows="3" required maxlength="400"></textarea></label>
+    <div class="pie-dialog">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn primario">Registrar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgResponderMensaje" aria-labelledby="dlgResponderMensajeTitulo">
+  <form id="formResponderMensaje" method="dialog">
+    <h3 id="dlgResponderMensajeTitulo">Responder mensaje</h3>
+    <input type="hidden" id="mrId">
+    <p class="ayuda" id="mrResumen" style="margin:0"></p>
+    <label>Tu respuesta <textarea id="mrRespuesta" rows="3" required maxlength="400"></textarea></label>
+    <div class="pie-dialog">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn primario">Enviar respuesta</button>
     </div>
   </form>
 </dialog>
@@ -163,7 +345,16 @@
   "use strict";
 
   const CLAVE = "juegaya-admin-v1";
+  // ojo: esto es solo una traba de acceso para este prototipo (sin backend), no seguridad real.
+  // cualquiera que mire el código fuente puede ver estas credenciales; no usar así en producción.
+  const CLAVE_SESION_ADMIN = "juegaya-admin-sesion";
+  const USUARIO_ADMIN = "admin";
+  const CLAVE_ADMIN_ACCESO = "juegaya2026";
   const ESTADOS = { pendiente: "Pendiente", confirmada: "Confirmada", completada: "Completada", cancelada: "Cancelada" };
+  const ESTADOS_PAGO = { sin_pagar: "Sin pagar", parcial: "Pago parcial", pagado: "Pagado" };
+  const ESTADOS_RECLAMO = { pendiente: "Pendiente", cerrado: "Cerrado" };
+  const ESTADOS_RESENA = { pendiente: "Por revisar", aprobada: "Aprobada", eliminada: "Eliminada" };
+  const CHECKLIST_ITEMS = ["Juego limpio y en buen estado", "Sin roturas ni manchas", "Inflador y accesorios completos", "Cliente firmó conformidad de entrega"];
   const $ = (s, r = document) => r.querySelector(s);
   const clp = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" });
   const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -185,10 +376,46 @@
         { id: "hockey", nombre: "Hockey", categoria: "Interior", precio: 70000, descripcion: "Air hockey de tamaño completo.", activo: true }
       ],
       reservas: [
-        { id: idNuevo(), codigo: "JY-4F2KQ", cliente: "María Pérez", telefono: "+56 9 1111 1111", juegoId: "castillo", fecha: en(2), horas: 6, total: 45000, estado: "pendiente" },
-        { id: idNuevo(), codigo: "JY-9XH3M", cliente: "Carlos Soto", telefono: "+56 9 2222 2222", juegoId: "tobogan", fecha: en(5), horas: 4, total: 63332, estado: "confirmada" }
+        { id: idNuevo(), codigo: "JY-4F2KQ", cliente: "María Pérez", telefono: "+56 9 1111 1111", juegoId: "castillo", fecha: en(2), horas: 6, total: 45000, estado: "pendiente", estadoPago: "sin_pagar", vehiculo: "", responsable: "", checklistRetiro: null },
+        { id: idNuevo(), codigo: "JY-9XH3M", cliente: "Carlos Soto", telefono: "+56 9 2222 2222", juegoId: "tobogan", fecha: en(5), horas: 4, total: 63332, estado: "confirmada", estadoPago: "parcial", vehiculo: "Camioneta 1", responsable: "Jorge Muñoz", checklistRetiro: null }
+      ],
+      reclamos: [
+        { id: idNuevo(), cliente: "Carlos Soto", telefono: "+56 9 2222 2222", asunto: "Llegó con retraso", mensaje: "El camión llegó una hora tarde al evento.", fecha: aISO(new Date()), estado: "pendiente", respuesta: "" }
+      ],
+      resenasReportadas: [
+        { id: idNuevo(), juegoId: "arcade", autor: "Anónimo", comentario: "Texto con lenguaje inapropiado reportado por otro cliente.", motivo: "Lenguaje ofensivo", estado: "pendiente" }
+      ],
+      descuentos: [
+        { id: idNuevo(), codigo: "JUEGA10", tipo: "porcentaje", valor: 10, activo: true },
+        { id: idNuevo(), codigo: "VERANO5000", tipo: "fijo", valor: 5000, activo: true }
+      ],
+      mensajes: [
+        { id: idNuevo(), cliente: "María Pérez", telefono: "+56 9 1111 1111", mensaje: "¿Pueden instalar el castillo antes de las 10 AM?", fecha: aISO(new Date()), respondido: false, respuesta: "" }
+      ],
+      historial: [
+        { id: idNuevo(), fecha: new Date().toISOString(), accion: "Sistema iniciado", detalle: "Se cargaron los datos de ejemplo." }
       ]
     };
+  }
+
+  // completa con valores por defecto los datos guardados antes de agregar estas funciones nuevas,
+  // así nadie pierde su información solo por venir de una versión más vieja del admin
+  function migrar(d) {
+    d.reclamos = Array.isArray(d.reclamos) ? d.reclamos : [];
+    d.resenasReportadas = Array.isArray(d.resenasReportadas) ? d.resenasReportadas : [];
+    d.descuentos = Array.isArray(d.descuentos) ? d.descuentos : [
+      { id: idNuevo(), codigo: "JUEGA10", tipo: "porcentaje", valor: 10, activo: true },
+      { id: idNuevo(), codigo: "VERANO5000", tipo: "fijo", valor: 5000, activo: true }
+    ];
+    d.mensajes = Array.isArray(d.mensajes) ? d.mensajes : [];
+    d.historial = Array.isArray(d.historial) ? d.historial : [];
+    d.reservas.forEach(r => {
+      if (!r.estadoPago) r.estadoPago = "sin_pagar";
+      if (r.vehiculo === undefined) r.vehiculo = "";
+      if (r.responsable === undefined) r.responsable = "";
+      if (r.checklistRetiro === undefined) r.checklistRetiro = null;
+    });
+    return d;
   }
 
   let datos;
@@ -196,7 +423,7 @@
   function cargar() {
     try {
       const guardado = localStorage.getItem(CLAVE);
-      if (guardado) { const d = JSON.parse(guardado); if (d && Array.isArray(d.juegos) && Array.isArray(d.reservas)) return d; }
+      if (guardado) { const d = JSON.parse(guardado); if (d && Array.isArray(d.juegos) && Array.isArray(d.reservas)) return migrar(d); }
     } catch (e) { respaldoEnMemoria = true; }
     return datosEjemplo();
   }
@@ -217,14 +444,51 @@
   const codigoReserva = () => "JY-" + Math.random().toString(36).slice(2, 7).toUpperCase();
   const ocupa = r => r.estado === "pendiente" || r.estado === "confirmada";
   const hayChoque = (juegoId, f, ignorarId) => datos.reservas.some(r => r.juegoId === juegoId && r.fecha === f && ocupa(r) && r.id !== ignorarId);
+  const fechaHora = iso => new Date(iso).toLocaleString("es-CL", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+  // deja una línea en el historial de cambios del sistema (se llama justo antes de cada guardar())
+  function registrarHistorial(accion, detalle) {
+    datos.historial.unshift({ id: idNuevo(), fecha: new Date().toISOString(), accion, detalle });
+    if (datos.historial.length > 300) datos.historial.length = 300; // no lo dejo crecer para siempre
+  }
+
+  // arma el "perfil" de cada cliente juntando todas sus reservas (no es una lista guardada aparte,
+  // se calcula al vuelo a partir de las reservas que ya existen, agrupando por teléfono)
+  function clientesDerivados() {
+    const mapa = {};
+    datos.reservas.forEach(r => {
+      const clave = r.telefono || r.cliente;
+      if (!mapa[clave]) mapa[clave] = { telefono: r.telefono, nombre: r.cliente, reservas: [] };
+      mapa[clave].nombre = r.cliente; // me quedo con el nombre más reciente que escribieron
+      mapa[clave].reservas.push(r);
+    });
+    return Object.values(mapa).map(c => ({
+      ...c,
+      cantidad: c.reservas.length,
+      gastado: c.reservas.filter(r => r.estado === "confirmada" || r.estado === "completada").reduce((t, r) => t + r.total, 0),
+      ultima: c.reservas.map(r => r.fecha).sort().slice(-1)[0]
+    }));
+  }
 
   // ---------- Vistas ----------
   let vista = "resumen";
   let filtroEstado = "";
+  let filtroJuegoReserva = "";
+  let filtroDesdeReserva = "";
+  let filtroHastaReserva = "";
+  let mesCalendario = new Date();
+  let busquedaCliente = "";
+  let filtroReclamo = "";
+  let reporteDesde = aISO(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  let reporteHasta = aISO(new Date());
 
   function pintar() {
     document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.vista === vista)));
-    $("#contenido").innerHTML = { resumen: vistaResumen, juegos: vistaJuegos, reservas: vistaReservas }[vista]() + pieRespaldo();
+    $("#contenido").innerHTML = {
+      resumen: vistaResumen, juegos: vistaJuegos, reservas: vistaReservas, calendario: vistaCalendario,
+      clientes: vistaClientes, reportes: vistaReportes, reclamos: vistaReclamos, resenas: vistaResenas,
+      descuentos: vistaDescuentos, mensajes: vistaMensajes, historial: vistaHistorial
+    }[vista]() + pieRespaldo();
   }
 
   function vistaResumen() {
@@ -232,16 +496,20 @@
     const confirmadas = datos.reservas.filter(r => r.estado === "confirmada").length;
     const ingresos = datos.reservas.filter(r => r.estado === "confirmada" || r.estado === "completada").reduce((t, r) => t + r.total, 0);
     const activos = datos.juegos.filter(j => j.activo).length;
+    const reclamosPendientes = datos.reclamos.filter(r => r.estado === "pendiente").length;
+    const mensajesPendientes = datos.mensajes.filter(m => !m.respondido).length;
     const hoy = aISO(new Date());
     const proximas = datos.reservas.filter(r => ocupa(r) && r.fecha >= hoy).sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 5);
 
     return `
-      <div class="cabecera"><div><h2>Resumen</h2><p>Lo importante de tu negocio de un vistazo.</p></div></div>
+      <div class="cabecera"><div><h2>Resumen</h2><p>Lo importante de tu negocio de un vistazo (esta es la pantalla con la que arranca el admin).</p></div></div>
       <div class="indicadores">
         <div class="indicador"><strong>${pendientes}</strong><span>Reservas por confirmar</span></div>
         <div class="indicador"><strong>${confirmadas}</strong><span>Reservas confirmadas</span></div>
         <div class="indicador"><strong>${clp.format(ingresos)}</strong><span>Ingresos confirmados</span></div>
         <div class="indicador"><strong>${activos}</strong><span>Juegos visibles</span></div>
+        <div class="indicador"><strong>${reclamosPendientes}</strong><span>Reclamos pendientes</span></div>
+        <div class="indicador"><strong>${mensajesPendientes}</strong><span>Mensajes sin responder</span></div>
       </div>
       <h2 style="font-size:1.05rem;margin:2rem 0 .75rem">Próximos eventos</h2>
       <div class="panel">${proximas.length ? `<div class="scroll"><table>
@@ -275,10 +543,13 @@
   function vistaReservas() {
     const lista = datos.reservas
       .filter(r => !filtroEstado || r.estado === filtroEstado)
+      .filter(r => !filtroJuegoReserva || r.juegoId === filtroJuegoReserva)
+      .filter(r => !filtroDesdeReserva || r.fecha >= filtroDesdeReserva)
+      .filter(r => !filtroHastaReserva || r.fecha <= filtroHastaReserva)
       .sort((a, b) => b.fecha.localeCompare(a.fecha));
     return `
       <div class="cabecera">
-        <div><h2>Reservas</h2><p>Confirma, completa o cancela cada reserva.</p></div>
+        <div><h2>Reservas</h2><p>Confirma, completa o cancela cada reserva. Filtra por estado, juego o un rango de fechas.</p></div>
         <button class="btn primario" data-accion="nueva-reserva">+ Nueva reserva</button>
       </div>
       <div class="filtros">
@@ -286,9 +557,15 @@
           <option value="">Todos los estados</option>
           ${Object.entries(ESTADOS).map(([v, t]) => `<option value="${v}"${filtroEstado === v ? " selected" : ""}>${t}</option>`).join("")}
         </select>
+        <select class="btn" id="filtroJuegoReserva" aria-label="Filtrar por juego">
+          <option value="">Todos los juegos</option>
+          ${datos.juegos.map(j => `<option value="${esc(j.id)}"${filtroJuegoReserva === j.id ? " selected" : ""}>${esc(j.nombre)}</option>`).join("")}
+        </select>
+        <label style="display:flex;align-items:center;gap:.4rem;font-weight:400">Desde <input type="date" id="filtroDesdeReserva" value="${filtroDesdeReserva}" style="width:auto"></label>
+        <label style="display:flex;align-items:center;gap:.4rem;font-weight:400">Hasta <input type="date" id="filtroHastaReserva" value="${filtroHastaReserva}" style="width:auto"></label>
       </div>
       <div class="panel">${lista.length ? `<div class="scroll"><table>
-        <thead><tr><th>Código</th><th>Cliente</th><th>Juego</th><th>Fecha</th><th class="num">Total</th><th>Estado</th><th></th></tr></thead>
+        <thead><tr><th>Código</th><th>Cliente</th><th>Juego</th><th>Fecha</th><th class="num">Total</th><th>Estado</th><th>Pago</th><th>Logística</th><th></th></tr></thead>
         <tbody>${lista.map(r => `<tr>
           <td><strong>${esc(r.codigo)}</strong></td>
           <td>${esc(r.cliente)}<span class="sec">${esc(r.telefono)}</span></td>
@@ -298,9 +575,111 @@
           <td><select class="btn chico" data-estado="${esc(r.id)}" aria-label="Estado de ${esc(r.codigo)}">
             ${Object.entries(ESTADOS).map(([v, t]) => `<option value="${v}"${r.estado === v ? " selected" : ""}>${t}</option>`).join("")}
           </select></td>
-          <td class="acciones"><button class="btn chico peligro" data-accion="borrar-reserva" data-id="${esc(r.id)}">Eliminar</button></td>
+          <td><select class="btn chico" data-pago="${esc(r.id)}" aria-label="Estado de pago de ${esc(r.codigo)}">
+            ${Object.entries(ESTADOS_PAGO).map(([v, t]) => `<option value="${v}"${r.estadoPago === v ? " selected" : ""}>${t}</option>`).join("")}
+          </select></td>
+          <td>${r.vehiculo || r.responsable ? `${esc(r.vehiculo) || "—"}<span class="sec">${esc(r.responsable) || "Sin asignar"}</span>` : `<span class="sec">Sin asignar</span>`}</td>
+          <td class="acciones">
+            <button class="btn chico" data-accion="editar-reserva" data-id="${esc(r.id)}">Editar</button>
+            <button class="btn chico" data-accion="abrir-checklist" data-id="${esc(r.id)}">${r.checklistRetiro ? "Ver checklist" : "Checklist"}</button>
+            <button class="btn chico peligro" data-accion="borrar-reserva" data-id="${esc(r.id)}">Eliminar</button>
+          </td>
         </tr>`).join("")}</tbody></table></div>`
         : `<div class="vacio">${datos.reservas.length ? "Ninguna reserva coincide con el filtro." : "Aún no hay reservas."}</div>`}</div>`;
+  }
+
+  // ---------- Calendario general de reservas ----------
+  function vistaCalendario() {
+    const año = mesCalendario.getFullYear(), mes = mesCalendario.getMonth();
+    const primerDia = new Date(año, mes, 1);
+    const ultimoDia = new Date(año, mes + 1, 0);
+    const inicioSemana = (primerDia.getDay() + 6) % 7; // para que la semana empiece en lunes
+    const nombreMes = primerDia.toLocaleDateString("es-CL", { month: "long", year: "numeric" });
+
+    const reservasPorFecha = {};
+    datos.reservas.filter(r => r.estado !== "cancelada").forEach(r => { (reservasPorFecha[r.fecha] ||= []).push(r); });
+
+    let celdas = "";
+    for (let i = 0; i < inicioSemana; i++) celdas += `<div class="dia vacio-dia"></div>`;
+    for (let d = 1; d <= ultimoDia.getDate(); d++) {
+      const iso = aISO(new Date(año, mes, d));
+      const delDia = reservasPorFecha[iso] || [];
+      celdas += `<div class="dia"><strong>${d}</strong>
+        ${delDia.map(r => `<span class="evento-cal ${r.estado}" title="${esc(r.cliente)} · ${esc((juegoPorId(r.juegoId) || {}).nombre || "")}">${esc((juegoPorId(r.juegoId) || {}).nombre || "?")} · ${esc(r.cliente)}</span>`).join("")}
+      </div>`;
+    }
+
+    return `
+      <div class="cabecera">
+        <div><h2>Calendario</h2><p>Todas las reservas activas del mes, de un vistazo.</p></div>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <button class="btn chico" data-accion="mes-anterior" aria-label="Mes anterior">◀</button>
+          <strong style="text-transform:capitalize">${nombreMes}</strong>
+          <button class="btn chico" data-accion="mes-siguiente" aria-label="Mes siguiente">▶</button>
+        </div>
+      </div>
+      <div class="calendario">
+        <div class="cal-cabecera">${["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(d => `<div>${d}</div>`).join("")}</div>
+        <div class="cal-grid">${celdas}</div>
+      </div>`;
+  }
+
+  // ---------- Perfil de clientes ----------
+  function vistaClientes() {
+    const lista = clientesDerivados()
+      .filter(c => !busquedaCliente || `${c.nombre} ${c.telefono}`.toLowerCase().includes(busquedaCliente.toLowerCase()))
+      .sort((a, b) => b.gastado - a.gastado);
+    return `
+      <div class="cabecera"><div><h2>Clientes</h2><p>El perfil de cada cliente, armado a partir de sus reservas.</p></div></div>
+      <div class="filtros"><input type="search" id="buscarCliente" placeholder="Buscar por nombre o teléfono" value="${esc(busquedaCliente)}"></div>
+      <div class="panel">${lista.length ? `<div class="scroll"><table>
+        <thead><tr><th>Cliente</th><th>Teléfono</th><th class="num">Reservas</th><th class="num">Total gastado</th><th>Última reserva</th><th></th></tr></thead>
+        <tbody>${lista.map(c => `<tr>
+          <td><strong>${esc(c.nombre)}</strong></td>
+          <td>${esc(c.telefono || "—")}</td>
+          <td class="num">${c.cantidad}</td>
+          <td class="num">${clp.format(c.gastado)}</td>
+          <td>${c.ultima ? fecha(c.ultima) : "—"}</td>
+          <td class="acciones"><button class="btn chico" data-accion="ver-cliente" data-id="${esc(c.telefono)}">Ver perfil</button></td>
+        </tr>`).join("")}</tbody></table></div>`
+        : `<div class="vacio">${datos.reservas.length ? "Ningún cliente coincide con la búsqueda." : "Aún no hay reservas de clientes."}</div>`}</div>`;
+  }
+
+  // ---------- Reportes ----------
+  function vistaReportes() {
+    const porJuego = {};
+    datos.reservas.filter(r => r.estado === "confirmada" || r.estado === "completada").forEach(r => {
+      porJuego[r.juegoId] ||= { veces: 0, horas: 0, ingresos: 0 };
+      porJuego[r.juegoId].veces++; porJuego[r.juegoId].horas += r.horas; porJuego[r.juegoId].ingresos += r.total;
+    });
+    const filasProductos = Object.entries(porJuego).sort((a, b) => b[1].ingresos - a[1].ingresos);
+
+    const enRango = datos.reservas.filter(r => (r.estado === "confirmada" || r.estado === "completada") && r.fecha >= reporteDesde && r.fecha <= reporteHasta);
+    const totalPeriodo = enRango.reduce((t, r) => t + r.total, 0);
+
+    return `
+      <div class="cabecera"><div><h2>Reportes</h2><p>Qué se arrienda más y cuánto estás ganando.</p></div></div>
+
+      <h2 style="font-size:1.05rem;margin:0 0 .75rem">Productos arrendados</h2>
+      <div class="panel" style="margin-bottom:2rem">${filasProductos.length ? `<div class="scroll"><table>
+        <thead><tr><th>Juego</th><th class="num">Veces arrendado</th><th class="num">Horas totales</th><th class="num">Ingresos generados</th></tr></thead>
+        <tbody>${filasProductos.map(([id, d]) => `<tr>
+          <td><strong>${esc((juegoPorId(id) || {}).nombre || "Juego eliminado")}</strong></td>
+          <td class="num">${d.veces}</td>
+          <td class="num">${d.horas} h</td>
+          <td class="num">${clp.format(d.ingresos)}</td>
+        </tr>`).join("")}</tbody></table></div>`
+        : `<div class="vacio">Todavía no hay reservas confirmadas o completadas.</div>`}</div>
+
+      <h2 style="font-size:1.05rem;margin:0 0 .75rem">Ingresos por período</h2>
+      <div class="filtros">
+        <label style="display:flex;align-items:center;gap:.4rem;font-weight:400">Desde <input type="date" id="reporteDesde" value="${reporteDesde}" style="width:auto"></label>
+        <label style="display:flex;align-items:center;gap:.4rem;font-weight:400">Hasta <input type="date" id="reporteHasta" value="${reporteHasta}" style="width:auto"></label>
+      </div>
+      <div class="indicadores">
+        <div class="indicador"><strong>${clp.format(totalPeriodo)}</strong><span>Ingresos en el período</span></div>
+        <div class="indicador"><strong>${enRango.length}</strong><span>Reservas en el período</span></div>
+      </div>`;
   }
 
   function pieRespaldo() {
@@ -311,6 +690,121 @@
       <button class="btn chico peligro" data-accion="reiniciar">Restablecer ejemplo</button>
       <input type="file" id="archivoImportar" accept="application/json" hidden>
     </div>`;
+  }
+
+  // ---------- Reclamos ----------
+  function vistaReclamos() {
+    const lista = datos.reclamos.filter(r => !filtroReclamo || r.estado === filtroReclamo).sort((a, b) => b.fecha.localeCompare(a.fecha));
+    return `
+      <div class="cabecera">
+        <div><h2>Reclamos</h2><p>Responde y cierra los reclamos que dejan los clientes.</p></div>
+        <button class="btn primario" data-accion="nuevo-reclamo">+ Registrar reclamo</button>
+      </div>
+      <div class="filtros">
+        <select class="btn" id="filtroReclamo" aria-label="Filtrar por estado">
+          <option value="">Todos</option>
+          ${Object.entries(ESTADOS_RECLAMO).map(([v, t]) => `<option value="${v}"${filtroReclamo === v ? " selected" : ""}>${t}</option>`).join("")}
+        </select>
+      </div>
+      <div class="panel">${lista.length ? `<div class="scroll"><table>
+        <thead><tr><th>Cliente</th><th>Asunto</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+        <tbody>${lista.map(r => `<tr>
+          <td><strong>${esc(r.cliente)}</strong><span class="sec">${esc(r.telefono || "")}</span></td>
+          <td>${esc(r.asunto)}<span class="sec">${esc(r.mensaje)}</span>${r.respuesta ? `<div class="respuesta"><strong>Tu respuesta</strong>${esc(r.respuesta)}</div>` : ""}</td>
+          <td>${fecha(r.fecha)}</td>
+          <td><span class="chip ${r.estado === "cerrado" ? "ok" : "off"}">${ESTADOS_RECLAMO[r.estado]}</span></td>
+          <td class="acciones">
+            ${r.estado === "pendiente" ? `<button class="btn chico primario" data-accion="responder-reclamo" data-id="${esc(r.id)}">Responder y cerrar</button>` : `<button class="btn chico" data-accion="reabrir-reclamo" data-id="${esc(r.id)}">Reabrir</button>`}
+            <button class="btn chico peligro" data-accion="borrar-reclamo" data-id="${esc(r.id)}">Eliminar</button>
+          </td>
+        </tr>`).join("")}</tbody></table></div>`
+        : `<div class="vacio">${datos.reclamos.length ? "Ningún reclamo coincide con el filtro." : "No hay reclamos registrados."}</div>`}</div>`;
+  }
+
+  // ---------- Reseñas reportadas ----------
+  function vistaResenas() {
+    const lista = datos.resenasReportadas.slice().sort((a, b) => (a.estado === "pendiente" ? -1 : 1));
+    return `
+      <div class="cabecera">
+        <div><h2>Reseñas</h2><p>Modera las reseñas que los clientes reportaron como inapropiadas.</p></div>
+        <button class="btn primario" data-accion="nueva-resena">+ Reportar reseña</button>
+      </div>
+      <div class="panel">${lista.length ? `<div class="scroll"><table>
+        <thead><tr><th>Juego</th><th>Reseña</th><th>Motivo</th><th>Estado</th><th></th></tr></thead>
+        <tbody>${lista.map(r => `<tr>
+          <td>${esc((juegoPorId(r.juegoId) || {}).nombre || "Juego eliminado")}</td>
+          <td><strong>${esc(r.autor)}</strong><span class="sec">${esc(r.comentario)}</span></td>
+          <td>${esc(r.motivo)}</td>
+          <td><span class="chip ${r.estado === "aprobada" ? "ok" : r.estado === "eliminada" ? "off" : "warn"}">${ESTADOS_RESENA[r.estado]}</span></td>
+          <td class="acciones">${r.estado === "pendiente" ? `
+            <button class="btn chico" data-accion="aprobar-resena" data-id="${esc(r.id)}">Aprobar</button>
+            <button class="btn chico peligro" data-accion="eliminar-resena" data-id="${esc(r.id)}">Eliminar</button>` : ""}
+          </td>
+        </tr>`).join("")}</tbody></table></div>`
+        : `<div class="vacio">No hay reseñas reportadas.</div>`}</div>`;
+  }
+
+  // ---------- Códigos de descuento ----------
+  function vistaDescuentos() {
+    return `
+      <div class="cabecera">
+        <div><h2>Descuentos</h2><p>Códigos que los clientes pueden usar al reservar.</p></div>
+        <button class="btn primario" data-accion="nuevo-descuento">+ Nuevo código</button>
+      </div>
+      <div class="panel">${datos.descuentos.length ? `<div class="scroll"><table>
+        <thead><tr><th>Código</th><th>Tipo</th><th class="num">Valor</th><th>Estado</th><th></th></tr></thead>
+        <tbody>${datos.descuentos.map(d => `<tr>
+          <td><strong>${esc(d.codigo)}</strong></td>
+          <td>${d.tipo === "porcentaje" ? "Porcentaje" : "Monto fijo"}</td>
+          <td class="num">${d.tipo === "porcentaje" ? `${d.valor}%` : clp.format(d.valor)}</td>
+          <td><span class="chip ${d.activo ? "ok" : "off"}">${d.activo ? "Activo" : "Inactivo"}</span></td>
+          <td class="acciones">
+            <button class="btn chico" data-accion="editar-descuento" data-id="${esc(d.id)}">Editar</button>
+            <button class="btn chico" data-accion="alternar-descuento" data-id="${esc(d.id)}">${d.activo ? "Desactivar" : "Activar"}</button>
+            <button class="btn chico peligro" data-accion="borrar-descuento" data-id="${esc(d.id)}">Eliminar</button>
+          </td>
+        </tr>`).join("")}</tbody></table></div>`
+        : `<div class="vacio">Aún no tienes códigos de descuento.</div>`}</div>`;
+  }
+
+  // ---------- Bandeja de mensajes de clientes ----------
+  function vistaMensajes() {
+    const lista = datos.mensajes.slice().sort((a, b) => (a.respondido === b.respondido ? b.fecha.localeCompare(a.fecha) : a.respondido ? 1 : -1));
+    return `
+      <div class="cabecera">
+        <div><h2>Mensajes</h2><p>Bandeja centralizada para responder a tus clientes.</p></div>
+        <button class="btn primario" data-accion="nuevo-mensaje">+ Nuevo mensaje</button>
+      </div>
+      <div class="panel">${lista.length ? `<div class="scroll"><table>
+        <thead><tr><th>Cliente</th><th>Mensaje</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+        <tbody>${lista.map(m => `<tr>
+          <td><strong>${esc(m.cliente)}</strong><span class="sec">${esc(m.telefono || "")}</span></td>
+          <td>${esc(m.mensaje)}${m.respuesta ? `<div class="respuesta"><strong>Tu respuesta</strong>${esc(m.respuesta)}</div>` : ""}</td>
+          <td>${fecha(m.fecha)}</td>
+          <td><span class="chip ${m.respondido ? "ok" : "warn"}">${m.respondido ? "Respondido" : "Pendiente"}</span></td>
+          <td class="acciones">
+            ${!m.respondido ? `<button class="btn chico primario" data-accion="responder-mensaje" data-id="${esc(m.id)}">Responder</button>` : ""}
+            <button class="btn chico peligro" data-accion="borrar-mensaje" data-id="${esc(m.id)}">Eliminar</button>
+          </td>
+        </tr>`).join("")}</tbody></table></div>`
+        : `<div class="vacio">No hay mensajes de clientes.</div>`}</div>`;
+  }
+
+  // ---------- Historial de cambios del sistema ----------
+  function vistaHistorial() {
+    return `
+      <div class="cabecera">
+        <div><h2>Historial</h2><p>Registro de todo lo que se ha hecho en este panel.</p></div>
+        ${datos.historial.length ? `<button class="btn peligro" data-accion="limpiar-historial">Limpiar historial</button>` : ""}
+      </div>
+      <div class="panel">${datos.historial.length ? `<div class="scroll"><table>
+        <thead><tr><th>Fecha</th><th>Acción</th><th>Detalle</th></tr></thead>
+        <tbody>${datos.historial.map(h => `<tr>
+          <td style="white-space:nowrap">${esc(fechaHora(h.fecha))}</td>
+          <td><strong>${esc(h.accion)}</strong></td>
+          <td>${esc(h.detalle)}</td>
+        </tr>`).join("")}</tbody></table></div>`
+        : `<div class="vacio">Todavía no hay cambios registrados.</div>`}</div>`;
   }
 
   // ---------- Juegos ----------
@@ -338,6 +832,7 @@
     if (!nuevo.nombre || !(nuevo.precio > 0)) return;
     if (id) Object.assign(juegoPorId(id), nuevo);
     else datos.juegos.push({ id: idNuevo(), ...nuevo });
+    registrarHistorial(id ? "Juego editado" : "Juego creado", nuevo.nombre);
     guardar(); pintar(); aviso(id ? "Juego actualizado" : "Juego creado");
   });
 
@@ -348,13 +843,23 @@
     $("#rTotal").textContent = j && horas ? `Total: ${clp.format(precioHora(j) * horas)} (${clp.format(precioHora(j))} por hora)` : "";
   }
 
-  function abrirReserva() {
-    const disponibles = datos.juegos.filter(j => j.activo);
+  // sirve tanto para "Nueva reserva" (sin argumento) como para "Editar" (pasándole la reserva existente)
+  function abrirReserva(reserva) {
+    const disponibles = datos.juegos.filter(j => j.activo || (reserva && j.id === reserva.juegoId));
     if (!disponibles.length) { aviso("Primero crea o muestra al menos un juego"); return; }
     $("#formReserva").reset();
+    $("#dlgReservaTitulo").textContent = reserva ? "Editar reserva" : "Nueva reserva";
+    $("#rSubmit").textContent = reserva ? "Guardar cambios" : "Crear reserva";
+    $("#rId").value = reserva ? reserva.id : "";
     $("#rJuego").innerHTML = disponibles.map(j => `<option value="${esc(j.id)}">${esc(j.nombre)}</option>`).join("");
     $("#rFecha").min = aISO(new Date());
-    $("#rHoras").value = 6;
+    $("#rCliente").value = reserva ? reserva.cliente : "";
+    $("#rTelefono").value = reserva ? reserva.telefono : "";
+    $("#rJuego").value = reserva ? reserva.juegoId : disponibles[0].id;
+    $("#rFecha").value = reserva ? reserva.fecha : "";
+    $("#rHoras").value = reserva ? reserva.horas : 6;
+    $("#rVehiculo").value = reserva ? reserva.vehiculo : "";
+    $("#rResponsable").value = reserva ? reserva.responsable : "";
     actualizarTotalReserva();
     $("#dlgReserva").showModal();
     $("#rCliente").focus();
@@ -364,20 +869,161 @@
   $("#rHoras").addEventListener("input", actualizarTotalReserva);
 
   $("#formReserva").addEventListener("submit", evento => {
+    const id = $("#rId").value;
     const juegoId = $("#rJuego").value;
     const f = $("#rFecha").value;
     const horas = Math.min(6, Math.max(1, parseInt($("#rHoras").value, 10) || 0));
-    if (hayChoque(juegoId, f)) {
+    if (hayChoque(juegoId, f, id || undefined)) {
       evento.preventDefault();
       aviso("Ese juego ya está reservado para esa fecha");
       return;
     }
-    datos.reservas.push({
-      id: idNuevo(), codigo: codigoReserva(),
-      cliente: $("#rCliente").value.trim(), telefono: $("#rTelefono").value.trim(),
-      juegoId, fecha: f, horas, total: precioHora(juegoPorId(juegoId)) * horas, estado: "pendiente"
+    const cliente = $("#rCliente").value.trim(), telefono = $("#rTelefono").value.trim();
+    const vehiculo = $("#rVehiculo").value.trim(), responsable = $("#rResponsable").value.trim();
+    if (id) {
+      const r = datos.reservas.find(x => x.id === id);
+      Object.assign(r, { cliente, telefono, juegoId, fecha: f, horas, total: precioHora(juegoPorId(juegoId)) * horas, vehiculo, responsable });
+      registrarHistorial("Reserva editada", `${r.codigo} · ${cliente}`);
+    } else {
+      const codigo = codigoReserva();
+      datos.reservas.push({
+        id: idNuevo(), codigo, cliente, telefono, juegoId, fecha: f, horas,
+        total: precioHora(juegoPorId(juegoId)) * horas, estado: "pendiente", estadoPago: "sin_pagar",
+        vehiculo, responsable, checklistRetiro: null
+      });
+      registrarHistorial("Reserva creada", `${codigo} · ${cliente}`);
+    }
+    guardar(); pintar(); aviso(id ? "Reserva actualizada" : "Reserva creada");
+  });
+
+  // ---------- Checklist de retiro ----------
+  function abrirChecklist(reserva) {
+    const guardado = reserva.checklistRetiro;
+    $("#ckId").value = reserva.id;
+    $("#ckItems").innerHTML = CHECKLIST_ITEMS.map((texto, i) => `
+      <label class="check"><input type="checkbox" data-item="${i}" ${guardado && guardado.items[i] && guardado.items[i].hecho ? "checked" : ""}> ${esc(texto)}</label>`).join("");
+    $("#ckNotas").value = guardado ? guardado.notas : "";
+    $("#dlgChecklist").showModal();
+  }
+
+  $("#formChecklist").addEventListener("submit", () => {
+    const r = datos.reservas.find(x => x.id === $("#ckId").value);
+    const items = CHECKLIST_ITEMS.map((texto, i) => ({ texto, hecho: $(`[data-item="${i}"]`).checked }));
+    r.checklistRetiro = { fecha: new Date().toISOString(), items, notas: $("#ckNotas").value.trim() };
+    registrarHistorial("Checklist de retiro completado", `${r.codigo} · ${r.cliente}`);
+    guardar(); pintar(); aviso("Checklist guardado");
+  });
+
+  // ---------- Ver perfil de cliente ----------
+  function abrirCliente(telefono) {
+    const c = clientesDerivados().find(x => x.telefono === telefono);
+    if (!c) return;
+    $("#dlgClienteTitulo").textContent = c.nombre;
+    $("#dlgClienteCuerpo").innerHTML = `
+      <p class="ayuda" style="margin:0">${esc(c.telefono || "Sin teléfono")} · ${c.cantidad} reserva${c.cantidad === 1 ? "" : "s"} · ${clp.format(c.gastado)} gastados</p>
+      <div class="scroll" style="margin-top:1rem"><table>
+        <thead><tr><th>Código</th><th>Juego</th><th>Fecha</th><th class="num">Total</th><th>Estado</th></tr></thead>
+        <tbody>${c.reservas.sort((a, b) => b.fecha.localeCompare(a.fecha)).map(r => `<tr>
+          <td>${esc(r.codigo)}</td><td>${esc((juegoPorId(r.juegoId) || {}).nombre || "Juego eliminado")}</td>
+          <td>${fecha(r.fecha)}</td><td class="num">${clp.format(r.total)}</td><td>${ESTADOS[r.estado]}</td>
+        </tr>`).join("")}</tbody></table></div>`;
+    $("#dlgCliente").showModal();
+  }
+
+  // ---------- Reclamos ----------
+  $("#formReclamo").addEventListener("submit", () => {
+    datos.reclamos.push({
+      id: idNuevo(), cliente: $("#qCliente").value.trim(), telefono: $("#qTelefono").value.trim(),
+      asunto: $("#qAsunto").value.trim(), mensaje: $("#qMensaje").value.trim(),
+      fecha: aISO(new Date()), estado: "pendiente", respuesta: ""
     });
-    guardar(); pintar(); aviso("Reserva creada");
+    registrarHistorial("Reclamo registrado", $("#qAsunto").value.trim());
+    guardar(); pintar(); aviso("Reclamo registrado");
+  });
+
+  function abrirResponderReclamo(reclamo) {
+    $("#qrId").value = reclamo.id;
+    $("#qrResumen").textContent = `${reclamo.cliente} — ${reclamo.asunto}`;
+    $("#qrRespuesta").value = "";
+    $("#dlgResponderReclamo").showModal();
+    $("#qrRespuesta").focus();
+  }
+
+  $("#formResponderReclamo").addEventListener("submit", () => {
+    const r = datos.reclamos.find(x => x.id === $("#qrId").value);
+    r.respuesta = $("#qrRespuesta").value.trim();
+    r.estado = "cerrado";
+    registrarHistorial("Reclamo respondido y cerrado", `${r.cliente} — ${r.asunto}`);
+    guardar(); pintar(); aviso("Reclamo cerrado");
+  });
+
+  // ---------- Reseñas reportadas ----------
+  function abrirResena() {
+    if (!datos.juegos.length) { aviso("Primero crea al menos un juego"); return; }
+    $("#formResena").reset();
+    $("#eJuego").innerHTML = datos.juegos.map(j => `<option value="${esc(j.id)}">${esc(j.nombre)}</option>`).join("");
+    $("#dlgResena").showModal();
+    $("#eAutor").focus();
+  }
+
+  $("#formResena").addEventListener("submit", () => {
+    datos.resenasReportadas.push({
+      id: idNuevo(), juegoId: $("#eJuego").value, autor: $("#eAutor").value.trim(),
+      comentario: $("#eComentario").value.trim(), motivo: $("#eMotivo").value.trim(), estado: "pendiente"
+    });
+    registrarHistorial("Reseña reportada", $("#eMotivo").value.trim());
+    guardar(); pintar(); aviso("Reseña reportada para revisión");
+  });
+
+  // ---------- Códigos de descuento ----------
+  function abrirDescuento(d) {
+    $("#dlgDescuentoTitulo").textContent = d ? "Editar código de descuento" : "Nuevo código de descuento";
+    $("#dId").value = d ? d.id : "";
+    $("#dCodigo").value = d ? d.codigo : "";
+    $("#dTipo").value = d ? d.tipo : "porcentaje";
+    $("#dValor").value = d ? d.valor : "";
+    $("#dActivo").checked = d ? d.activo : true;
+    $("#dlgDescuento").showModal();
+    $("#dCodigo").focus();
+  }
+
+  $("#formDescuento").addEventListener("submit", () => {
+    const id = $("#dId").value;
+    const nuevo = {
+      codigo: $("#dCodigo").value.trim().toUpperCase(),
+      tipo: $("#dTipo").value, valor: parseInt($("#dValor").value, 10), activo: $("#dActivo").checked
+    };
+    if (!nuevo.codigo || !(nuevo.valor > 0)) return;
+    if (id) Object.assign(datos.descuentos.find(x => x.id === id), nuevo);
+    else datos.descuentos.push({ id: idNuevo(), ...nuevo });
+    registrarHistorial(id ? "Código de descuento editado" : "Código de descuento creado", nuevo.codigo);
+    guardar(); pintar(); aviso(id ? "Código actualizado" : "Código creado");
+  });
+
+  // ---------- Mensajes de clientes ----------
+  $("#formMensaje").addEventListener("submit", () => {
+    datos.mensajes.push({
+      id: idNuevo(), cliente: $("#mCliente").value.trim(), telefono: $("#mTelefono").value.trim(),
+      mensaje: $("#mMensaje").value.trim(), fecha: aISO(new Date()), respondido: false, respuesta: ""
+    });
+    registrarHistorial("Mensaje de cliente registrado", $("#mCliente").value.trim());
+    guardar(); pintar(); aviso("Mensaje registrado");
+  });
+
+  function abrirResponderMensaje(mensaje) {
+    $("#mrId").value = mensaje.id;
+    $("#mrResumen").textContent = `${mensaje.cliente}: "${mensaje.mensaje}"`;
+    $("#mrRespuesta").value = "";
+    $("#dlgResponderMensaje").showModal();
+    $("#mrRespuesta").focus();
+  }
+
+  $("#formResponderMensaje").addEventListener("submit", () => {
+    const m = datos.mensajes.find(x => x.id === $("#mrId").value);
+    m.respuesta = $("#mrRespuesta").value.trim();
+    m.respondido = true;
+    registrarHistorial("Mensaje respondido", m.cliente);
+    guardar(); pintar(); aviso("Respuesta enviada");
   });
 
   // ---------- Eventos ----------
@@ -395,20 +1041,66 @@
     switch (b.dataset.accion) {
       case "nuevo-juego": abrirJuego(null); break;
       case "editar-juego": abrirJuego(juegoPorId(id)); break;
-      case "alternar-juego": { const j = juegoPorId(id); j.activo = !j.activo; guardar(); pintar(); aviso(j.activo ? "Juego visible" : "Juego oculto"); break; }
+      case "alternar-juego": { const j = juegoPorId(id); j.activo = !j.activo; registrarHistorial(j.activo ? "Juego mostrado" : "Juego ocultado", j.nombre); guardar(); pintar(); aviso(j.activo ? "Juego visible" : "Juego oculto"); break; }
       case "borrar-juego": {
         const j = juegoPorId(id);
         const enUso = datos.reservas.some(r => r.juegoId === id && ocupa(r));
         if (enUso) { aviso("Tiene reservas activas: cancélalas antes o solo ocúltalo"); break; }
-        if (confirm(`¿Eliminar “${j.nombre}”? No se puede deshacer.`)) { datos.juegos = datos.juegos.filter(x => x.id !== id); guardar(); pintar(); aviso("Juego eliminado"); }
+        if (confirm(`¿Eliminar “${j.nombre}”? No se puede deshacer.`)) { datos.juegos = datos.juegos.filter(x => x.id !== id); registrarHistorial("Juego eliminado", j.nombre); guardar(); pintar(); aviso("Juego eliminado"); }
         break;
       }
       case "nueva-reserva": abrirReserva(); break;
+      case "editar-reserva": abrirReserva(datos.reservas.find(x => x.id === id)); break;
+      case "abrir-checklist": abrirChecklist(datos.reservas.find(x => x.id === id)); break;
       case "borrar-reserva":
         if (confirm("¿Eliminar esta reserva? Si solo quieres liberarla, mejor cámbiala a Cancelada.")) {
-          datos.reservas = datos.reservas.filter(x => x.id !== id); guardar(); pintar(); aviso("Reserva eliminada");
+          const r = datos.reservas.find(x => x.id === id);
+          datos.reservas = datos.reservas.filter(x => x.id !== id);
+          registrarHistorial("Reserva eliminada", r ? r.codigo : id);
+          guardar(); pintar(); aviso("Reserva eliminada");
         }
         break;
+
+      // ---- calendario ----
+      case "mes-anterior": mesCalendario = new Date(mesCalendario.getFullYear(), mesCalendario.getMonth() - 1, 1); pintar(); break;
+      case "mes-siguiente": mesCalendario = new Date(mesCalendario.getFullYear(), mesCalendario.getMonth() + 1, 1); pintar(); break;
+
+      // ---- clientes ----
+      case "ver-cliente": abrirCliente(id); break;
+
+      // ---- reclamos ----
+      case "nuevo-reclamo": $("#formReclamo").reset(); $("#dlgReclamo").showModal(); $("#qCliente").focus(); break;
+      case "responder-reclamo": abrirResponderReclamo(datos.reclamos.find(x => x.id === id)); break;
+      case "reabrir-reclamo": { const r = datos.reclamos.find(x => x.id === id); r.estado = "pendiente"; registrarHistorial("Reclamo reabierto", r.asunto); guardar(); pintar(); aviso("Reclamo reabierto"); break; }
+      case "borrar-reclamo":
+        if (confirm("¿Eliminar este reclamo?")) { datos.reclamos = datos.reclamos.filter(x => x.id !== id); guardar(); pintar(); aviso("Reclamo eliminado"); }
+        break;
+
+      // ---- reseñas reportadas ----
+      case "nueva-resena": abrirResena(); break;
+      case "aprobar-resena": { const r = datos.resenasReportadas.find(x => x.id === id); r.estado = "aprobada"; registrarHistorial("Reseña aprobada", r.autor); guardar(); pintar(); aviso("Reseña aprobada"); break; }
+      case "eliminar-resena": { const r = datos.resenasReportadas.find(x => x.id === id); r.estado = "eliminada"; registrarHistorial("Reseña eliminada", r.autor); guardar(); pintar(); aviso("Reseña eliminada"); break; }
+
+      // ---- descuentos ----
+      case "nuevo-descuento": abrirDescuento(null); break;
+      case "editar-descuento": abrirDescuento(datos.descuentos.find(x => x.id === id)); break;
+      case "alternar-descuento": { const d = datos.descuentos.find(x => x.id === id); d.activo = !d.activo; guardar(); pintar(); aviso(d.activo ? "Código activado" : "Código desactivado"); break; }
+      case "borrar-descuento":
+        if (confirm("¿Eliminar este código de descuento?")) { datos.descuentos = datos.descuentos.filter(x => x.id !== id); guardar(); pintar(); aviso("Código eliminado"); }
+        break;
+
+      // ---- mensajes ----
+      case "nuevo-mensaje": $("#formMensaje").reset(); $("#dlgMensaje").showModal(); $("#mCliente").focus(); break;
+      case "responder-mensaje": abrirResponderMensaje(datos.mensajes.find(x => x.id === id)); break;
+      case "borrar-mensaje":
+        if (confirm("¿Eliminar este mensaje?")) { datos.mensajes = datos.mensajes.filter(x => x.id !== id); guardar(); pintar(); aviso("Mensaje eliminado"); }
+        break;
+
+      // ---- historial ----
+      case "limpiar-historial":
+        if (confirm("¿Borrar todo el historial de cambios? No se puede deshacer.")) { datos.historial = []; guardar(); pintar(); aviso("Historial borrado"); }
+        break;
+
       case "exportar": {
         const enlace = document.createElement("a");
         enlace.href = URL.createObjectURL(new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" }));
@@ -425,13 +1117,27 @@
 
   $("#contenido").addEventListener("change", e => {
     if (e.target.id === "filtroEstado") { filtroEstado = e.target.value; pintar(); return; }
+    if (e.target.id === "filtroJuegoReserva") { filtroJuegoReserva = e.target.value; pintar(); return; }
+    if (e.target.id === "filtroDesdeReserva") { filtroDesdeReserva = e.target.value; pintar(); return; }
+    if (e.target.id === "filtroHastaReserva") { filtroHastaReserva = e.target.value; pintar(); return; }
+    if (e.target.id === "filtroReclamo") { filtroReclamo = e.target.value; pintar(); return; }
+    if (e.target.id === "reporteDesde") { reporteDesde = e.target.value; pintar(); return; }
+    if (e.target.id === "reporteHasta") { reporteHasta = e.target.value; pintar(); return; }
+    if (e.target.id === "buscarCliente") { busquedaCliente = e.target.value; pintar(); return; }
     if (e.target.dataset.estado) {
       const r = datos.reservas.find(x => x.id === e.target.dataset.estado);
       const nuevo = e.target.value;
       if ((nuevo === "pendiente" || nuevo === "confirmada") && hayChoque(r.juegoId, r.fecha, r.id)) {
         aviso("Ese juego ya está reservado para esa fecha"); pintar(); return;
       }
+      registrarHistorial("Estado de reserva cambiado", `${r.codigo} → ${ESTADOS[nuevo]}`);
       r.estado = nuevo; guardar(); pintar(); aviso("Estado actualizado");
+      return;
+    }
+    if (e.target.dataset.pago) {
+      const r = datos.reservas.find(x => x.id === e.target.dataset.pago);
+      registrarHistorial("Estado de pago cambiado", `${r.codigo} → ${ESTADOS_PAGO[e.target.value]}`);
+      r.estadoPago = e.target.value; guardar(); pintar(); aviso("Estado de pago actualizado");
       return;
     }
     if (e.target.id === "archivoImportar" && e.target.files[0]) {
@@ -440,15 +1146,51 @@
         try {
           const d = JSON.parse(lector.result);
           if (!d || !Array.isArray(d.juegos) || !Array.isArray(d.reservas)) throw new Error("formato");
-          datos = d; guardar(); pintar(); aviso("Copia importada");
+          datos = migrar(d); guardar(); pintar(); aviso("Copia importada");
         } catch (err) { aviso("El archivo no es una copia válida de JuegaYa"); }
       };
       lector.readAsText(e.target.files[0]);
     }
   });
 
-  pintar();
-  if (respaldoEnMemoria) aviso("Este navegador no permite guardar: usa Exportar para no perder los datos");
+  $("#contenido").addEventListener("input", e => {
+    if (e.target.id === "buscarCliente") { busquedaCliente = e.target.value; pintar(); $("#buscarCliente").focus(); $("#buscarCliente").selectionStart = $("#buscarCliente").selectionEnd = busquedaCliente.length; }
+  });
+
+  // ---------- Acceso al panel ----------
+  function mostrarPanel() {
+    $("#pantallaAcceso").style.display = "none";
+    $("#panelAdmin").hidden = false;
+    pintar();
+    if (respaldoEnMemoria) aviso("Este navegador no permite guardar: usa Exportar para no perder los datos");
+  }
+
+  $("#formAcceso").addEventListener("submit", evento => {
+    evento.preventDefault();
+    const usuario = $("#accUsuario").value.trim();
+    const clave = $("#accClave").value;
+    if (usuario === USUARIO_ADMIN && clave === CLAVE_ADMIN_ACCESO) {
+      sessionStorage.setItem(CLAVE_SESION_ADMIN, "1");
+      $("#accError").textContent = "";
+      mostrarPanel();
+    } else {
+      $("#accError").textContent = "Usuario o contraseña incorrectos.";
+      $("#accClave").value = "";
+      $("#accClave").focus();
+    }
+  });
+
+  $("#btnSalir").addEventListener("click", () => {
+    sessionStorage.removeItem(CLAVE_SESION_ADMIN);
+    location.reload();
+  });
+
+  // si ya había una sesión abierta en esta pestaña/navegador, me salto el login
+  if (sessionStorage.getItem(CLAVE_SESION_ADMIN) === "1") {
+    mostrarPanel();
+  } else {
+    $("#accUsuario").focus();
+  }
 })();
 </script>
 </body>
