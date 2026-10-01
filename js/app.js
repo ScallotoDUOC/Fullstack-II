@@ -7,15 +7,29 @@ const formatoCLP = new Intl.NumberFormat("es-CL", { style: "currency", currency:
 // porque lo uso desde varias partes del código (catálogo, login, registro, etc)
 const toast = bootstrap.Toast.getOrCreateInstance(document.querySelector("#appToast"));
 
+// misma clave que usa admin.html para guardar sus datos en este navegador, así leemos lo mismo que carga el admin
+const CLAVE_ADMIN = "juegaya-admin-v1";
+
+// trae lo que haya guardado el admin (juegos y descuentos), o null si todavía no se ha abierto nunca el admin.html
+function obtenerDatosAdmin() {
+  try {
+    const guardado = localStorage.getItem(CLAVE_ADMIN);
+    if (!guardado) return null;
+    const datos = JSON.parse(guardado);
+    if (datos && Array.isArray(datos.juegos)) return datos;
+  } catch (e) { /* si viene corrupto, sigo con los datos de siempre */ }
+  return null;
+}
+
 // ===================================================================
 // esto es la "ficha" completa de cada juego, para la página detalle-producto.html
 // la dejo separada acá arriba (no adentro de inicializarCatalogo) porque detalle-producto.html
 // no tiene el catálogo cargado, así que necesita sus propios datos para poder mostrar algo (hu-09, hu-10, hu-41, hu-43)
 // ===================================================================
-const productosDetalle = {
+// esto es lo "extra" que el admin no guarda (foto, calificación, dimensiones, reseñas), para los 5 juegos de siempre.
+// si el admin crea un juego nuevo o cambia nombre/precio/descripción, eso manda; esto solo rellena lo que falta
+const DETALLE_EXTRA = {
   castillo: {
-    nombre: "Castillo Aventura", categoria: "Inflable", precio: 45000,
-    descripcion: "Castillo con zona de salto y resbalín. Ideal para cumpleaños.",
     imagen: "https://inflablesmidas.cl/attachments/Image/plaza-2022.jpg", alt: "Castillo inflable colorido para niños",
     rating: "4,9", meta: [["bi-people", "7 niños"], ["bi-rulers", "4,5 × 3 m"]],
     resenas: [
@@ -24,8 +38,6 @@ const productosDetalle = {
     ]
   },
   tobogan: {
-    nombre: "Tobogán Jungla", categoria: "Acuático", precio: 95000,
-    descripcion: "Tobogán de gran formato con piscina de poca profundidad.",
     imagen: "https://rentaparty.cl/wp-content/uploads/2025/10/1000589305-1024x1024.jpg", alt: "Tobogán inflable acuático con temática de jungla",
     rating: "4,8", meta: [["bi-people", "10 niños"], ["bi-rulers", "5 × 5 m"]],
     resenas: [
@@ -34,8 +46,6 @@ const productosDetalle = {
     ]
   },
   arcade: {
-    nombre: "Arcade Retro", categoria: "Interior", precio: 55000,
-    descripcion: "Máquina multijuegos para competir y revivir los clásicos.",
     imagen: "", alt: "Máquina arcade de juegos retro", // este no tiene foto, usa el fondo con ícono (se arma más abajo)
     rating: "4,7", meta: [["bi-people", "2 jugadores"], ["bi-plug", "220 V"]],
     resenas: [
@@ -43,8 +53,6 @@ const productosDetalle = {
     ]
   },
   "taca-taca": {
-    nombre: "Taca taca", categoria: "Interior", precio: 45000,
-    descripcion: "Mesa de fútbol para partidos rápidos entre amigos y familia.",
     imagen: "https://colinainflables.imgix.net/producto/img_683a096bee7b25_97896834.jpg?fit=crop&fm=webp&h=600&lossless=true&q=25&w=600", alt: "Mesa de taca taca instalada sobre el césped",
     rating: "4,8", meta: [["bi-people", "4 jugadores"], ["bi-lightning", "Sin corriente"]],
     resenas: [
@@ -52,8 +60,6 @@ const productosDetalle = {
     ]
   },
   hockey: {
-    nombre: "Hockey", categoria: "Interior", precio: 70000,
-    descripcion: "Air hockey de tamaño completo para duelos llenos de velocidad.",
     imagen: "https://www.juegosbabymandi.cl/img/air-hockey-grande.jpg", alt: "Mesa de air hockey con dos discos rojos",
     rating: "4,9", meta: [["bi-people", "2 jugadores"], ["bi-plug", "220 V"]],
     resenas: [
@@ -61,6 +67,26 @@ const productosDetalle = {
     ]
   }
 };
+// lo que tiene un juego nuevo que el admin creó y que no tiene foto ni reseñas guardadas todavía
+const DETALLE_EXTRA_GENERICO = { imagen: "", alt: "", rating: "5,0", meta: [], resenas: [] };
+
+// estos son los juegos "de fábrica": se usan solo si todavía nadie ha abierto admin.html en este navegador
+function juegosPorDefecto() {
+  return [
+    { id: "castillo", nombre: "Castillo Aventura", categoria: "Inflable", precio: 45000, descripcion: "Castillo con zona de salto y resbalín. Ideal para cumpleaños.", activo: true },
+    { id: "tobogan", nombre: "Tobogán Jungla", categoria: "Acuático", precio: 95000, descripcion: "Tobogán de gran formato con piscina de poca profundidad.", activo: true },
+    { id: "arcade", nombre: "Arcade Retro", categoria: "Interior", precio: 55000, descripcion: "Máquina multijuegos para competir y revivir los clásicos.", activo: true },
+    { id: "taca-taca", nombre: "Taca taca", categoria: "Interior", precio: 45000, descripcion: "Mesa de fútbol para partidos rápidos entre amigos y familia.", activo: true },
+    { id: "hockey", nombre: "Hockey", categoria: "Interior", precio: 70000, descripcion: "Air hockey de tamaño completo para duelos llenos de velocidad.", activo: true }
+  ];
+}
+
+// junta los juegos del admin (si existen) con la info extra de fotos/reseñas, o usa los de fábrica si no hay admin todavía
+function obtenerJuegosPublicados() {
+  const admin = obtenerDatosAdmin();
+  const base = admin ? admin.juegos.filter(j => j.activo) : juegosPorDefecto();
+  return base.map(j => ({ ...j, ...(DETALLE_EXTRA[j.id] || DETALLE_EXTRA_GENERICO) }));
+}
 
 // para no meter caracteres raros de html si un nombre o comentario trae < > " '
 function esc(texto) {
@@ -76,7 +102,7 @@ function inicializarDetalleProducto() {
 
   // saco el "id" que viene pegado en la URL, tipo detalle-producto.html?id=castillo
   const idBuscado = new URLSearchParams(window.location.search).get("id");
-  const producto = productosDetalle[idBuscado];
+  const producto = obtenerJuegosPublicados().find(j => j.id === idBuscado);
 
   if (!producto) {
     // si no existe ese id, muestro el mensaje de "no encontrado" y no sigo
@@ -125,9 +151,58 @@ function inicializarDetalleProducto() {
   document.querySelector("#dpSeccionResenas").classList.remove("d-none");
 }
 
+// pasa la categoría del admin ("Inflable") al mismo "slug" que usan los botones de filtro del catálogo ("inflables")
+const CATEGORIA_SLUG = { "Inflable": "inflables", "Acuático": "acuaticos", "Interior": "interior" };
+
+// arma el html de una tarjeta de juego completa, para pintar el catálogo dinámicamente (hu-08, hu-09, hu-10, hu-11)
+function tarjetaJuegoHTML(juego) {
+  const slug = CATEGORIA_SLUG[juego.categoria] || "interior";
+  const esFoto = !!juego.imagen;
+  const bloqueImagen = esFoto
+    ? `<img src="${juego.imagen}" class="game-image" alt="${esc(juego.alt || juego.nombre)}">`
+    : `<i class="bi bi-joystick"></i><span>${esc(juego.categoria.toUpperCase())}</span>`;
+
+  return `
+    <div class="col-md-6 col-xl-4 game-item" id="juego-${esc(juego.id)}" data-category="${slug}">
+      <article class="game-card h-100">
+        <div class="game-image-wrap${esFoto ? "" : " arcade-visual"}"${esFoto ? "" : ` role="img" aria-label="${esc(juego.nombre)}"`}>
+          ${esFoto ? `<a href="detalle-producto.html?id=${encodeURIComponent(juego.id)}" aria-label="Ver detalle de ${esc(juego.nombre)}">${bloqueImagen}</a>` : `<a href="detalle-producto.html?id=${encodeURIComponent(juego.id)}" class="text-reset text-decoration-none" aria-label="Ver detalle de ${esc(juego.nombre)}">${bloqueImagen}</a>`}
+          <span class="status-badge"><i class="bi bi-check-circle-fill"></i> Disponible</span>
+          <button class="favorite-btn" aria-label="Agregar ${esc(juego.nombre)} a favoritos"><i class="bi bi-heart"></i></button>
+        </div>
+        <div class="p-4">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div><span class="game-type">${esc(juego.categoria.toUpperCase())}</span><h3 class="h4 mt-1 mb-2"><a href="detalle-producto.html?id=${encodeURIComponent(juego.id)}" class="text-reset text-decoration-none">${esc(juego.nombre)}</a></h3></div>
+            <span class="rating"><i class="bi bi-star-fill"></i> ${juego.rating}</span>
+          </div>
+          <p class="text-secondary">${esc(juego.descripcion)}</p>
+          <div class="game-meta">${juego.meta.map(([icono, texto]) => `<span><i class="bi ${icono}"></i> ${esc(texto)}</span>`).join("")}</div>
+          <hr>
+          <div class="d-flex justify-content-between align-items-center">
+            <div><span class="price">${formatoCLP.format(juego.precio)}</span><small class="text-secondary d-block">por jornada</small></div>
+            <button class="btn btn-outline-dark rounded-pill add-btn" data-id="${esc(juego.id)}" data-name="${esc(juego.nombre)}" data-price="${juego.precio}">Agregar</button>
+          </div>
+        </div>
+      </article>
+    </div>`;
+}
+
+// pinta el catálogo completo dentro de #listaJuegos, usando lo que haya guardado el admin (o los juegos de siempre)
+function pintarCatalogo() {
+  const contenedor = document.querySelector("#listaJuegos");
+  if (!contenedor) return;
+  const juegos = obtenerJuegosPublicados();
+  contenedor.innerHTML = juegos.length
+    ? juegos.map(tarjetaJuegoHTML).join("")
+    : `<div class="empty-state"><i class="bi bi-emoji-frown"></i><h3>Por ahora no hay juegos publicados</h3><p>Vuelve más tarde.</p></div>`;
+}
+
 // esta función junta TODO lo del catálogo y el carrito
 // ojo: solo se ejecuta si estamos parados en catalogo.html, si no, ni se llama (más abajo se ve eso)
 function inicializarCatalogo() {
+  // lo primero de todo: pinto las tarjetas con los juegos que vienen del admin (o los de siempre) (hu-08, hu-09, hu-10, hu-11)
+  pintarCatalogo();
+
   // acá agarro los elementos del carrito que voy a necesitar varias veces, para no repetir el querySelector siempre
   const contador = document.querySelector("#contadorCarrito");
 const contenedorItems = document.querySelector("#itemsCarrito");
@@ -174,12 +249,22 @@ const resenasJuegos = {
   ]
 };
 
-// acá defino qué juegos tienen descuento y qué códigos de descuento existen (inventados, ojalá algún día vengan de un admin) (hu-47, hu-50, hu-51)
-const juegosConDescuento = ["tobogan"];
-const codigosDescuento = {
-  JUEGA10: { tipo: "porcentaje", valor: 0.10, etiqueta: "10% de descuento" },
-  VERANO5000: { tipo: "fijo", valor: 5000, etiqueta: "$5.000 de descuento" }
-};
+// trae los códigos de descuento activos que haya creado el admin, o los 2 de siempre si no hay admin todavía (hu-50, hu-51)
+function obtenerCodigosDescuento() {
+  const admin = obtenerDatosAdmin();
+  const lista = admin && Array.isArray(admin.descuentos) ? admin.descuentos.filter(d => d.activo) : [
+    { codigo: "JUEGA10", tipo: "porcentaje", valor: 10, activo: true },
+    { codigo: "VERANO5000", tipo: "fijo", valor: 5000, activo: true }
+  ];
+  const mapa = {};
+  lista.forEach(d => {
+    // en el admin el porcentaje se guarda como "10" (10%), y acá lo necesito como "0.10" para multiplicar
+    const valor = d.tipo === "porcentaje" ? d.valor / 100 : d.valor;
+    const etiqueta = d.tipo === "porcentaje" ? `${d.valor}% de descuento` : `${formatoCLP.format(d.valor)} de descuento`;
+    mapa[d.codigo] = { tipo: d.tipo, valor, etiqueta };
+  });
+  return mapa;
+}
 
 // estas dos variables van cambiando mientras el usuario usa la página (por eso son let y no const)
 let comunaSeleccionada = "";
@@ -293,10 +378,13 @@ function inicializarCarritoExtras() {
     <input type="text" class="form-control form-control-sm" id="codigoDescuento" placeholder="Código de descuento">
     <button type="button" class="btn btn-outline-dark btn-sm" id="aplicarCodigo">Aplicar</button>`;
 
+  const codigosActivos = Object.keys(obtenerCodigosDescuento());
   const promoBanner = document.createElement("p");
   promoBanner.className = "small text-secondary mb-0 mt-2";
   promoBanner.id = "promoBanner";
-  promoBanner.innerHTML = `<i class="bi bi-tag"></i> Código disponible: <strong>JUEGA10</strong> (10% dcto)`;
+  promoBanner.innerHTML = codigosActivos.length
+    ? `<i class="bi bi-tag"></i> Código disponible: <strong>${esc(codigosActivos[0])}</strong>`
+    : "";
 
   // voy insertando todo esto justo antes de la notita original, y al final la reemplazo por el input de código + el banner
   cartTotal.insertBefore(filaTransporte, notaOriginal);
@@ -307,6 +395,7 @@ function inicializarCarritoExtras() {
   // cuando el usuario aprieta "Aplicar", reviso si el código existe en mi lista de arriba
   document.querySelector("#aplicarCodigo").addEventListener("click", () => {
     const codigo = document.querySelector("#codigoDescuento").value.trim().toUpperCase();
+    const codigosDescuento = obtenerCodigosDescuento();
     if (codigosDescuento[codigo]) {
       descuentoActivo = codigosDescuento[codigo];
       mostrarToast(`Código aplicado: ${descuentoActivo.etiqueta}`);
@@ -498,10 +587,10 @@ document.querySelectorAll(".favorite-btn").forEach(boton => {
     boton.querySelector("i").classList.toggle("bi-heart-fill");
 
     if (activando) {
-      const card = boton.closest(".game-card");
-      const id = card.querySelector(".add-btn").dataset.id;
-      if (juegosConDescuento.includes(id)) {
-        mostrarToast(`🎉 Este favorito tiene descuento activo: usa el código JUEGA10 en tu reserva`);
+      // el admin maneja los descuentos por código, no por juego específico, así que aviso si hay algún código activo
+      const codigos = Object.keys(obtenerCodigosDescuento());
+      if (codigos.length) {
+        mostrarToast(`🎉 Tienes un código de descuento disponible: usa ${codigos[0]} en tu reserva`);
       }
     }
   });
